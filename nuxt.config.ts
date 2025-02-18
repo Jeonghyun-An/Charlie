@@ -8,5 +8,6 @@ export default defineNuxtConfig({
     "pinia-plugin-persistedstate/nuxt",
     "@vueuse/nuxt",
     "@nuxtjs/tailwindcss",
+    "@primevue/nuxt-module",
   ],
 });
