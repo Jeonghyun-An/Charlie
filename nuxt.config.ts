@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-(() => {
+{
   const mode = process.env.MODE ?? "development";
   const environmentPath = path.resolve(process.cwd(), `envs/.env.${mode}`);
   const existEnvironment = fs.existsSync(environmentPath);
@@ -14,7 +14,7 @@ import path from "path";
   } else {
     console.warn(`.env 파일이 ${environmentPath}에 존재하지 않습니다.`);
   }
-})();
+}
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -43,4 +43,7 @@ export default defineNuxtConfig({
   },
   css: ["~/assets/scss/module.scss"],
   ssr: false,
+  devServer: {
+    host: "0.0.0.0",
+  },
 });

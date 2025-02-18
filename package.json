@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "start:dev": "cross-env MODE=development nuxt dev",
-    "start:prd": "cross-env MODE=production nuxt dev",
+    "start:dev": "cross-env MODE=development PORT=5000 nuxt dev",
+    "start:prd": "cross-env MODE=production PORT=5000 nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
