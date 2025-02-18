@@ -25,5 +25,8 @@
     "tailwindcss-primeui": "^0.4.0",
     "vue": "latest",
     "vue-router": "latest"
+  },
+  "devDependencies": {
+    "sass-embedded": "^1.85.0"
   }
 }
