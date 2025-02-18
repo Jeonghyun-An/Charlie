@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "start:dev": "cross-env MODE=development nuxt dev",
+    "start:prd": "cross-env MODE=production nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
@@ -27,6 +28,8 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
     "sass-embedded": "^1.85.0"
   }
 }
