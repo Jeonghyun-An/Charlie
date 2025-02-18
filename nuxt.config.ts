@@ -25,5 +25,6 @@ export default defineNuxtConfig({
       },
     },
   },
+  css: ["~/assets/scss/module.scss"],
   ssr: false,
 });
