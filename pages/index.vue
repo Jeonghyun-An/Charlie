@@ -7,6 +7,7 @@
       <Column field="quantity" header="Quantity"></Column>
     </DataTable>
   </div>
+  <InputText placeholder="Overriden" class="p-8 bg-red-400" />
 </template>
 
 <script setup lang="ts">
