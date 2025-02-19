@@ -11,14 +11,14 @@
                     >
                 </div>
                 <div class="px-8 flex flex-col gap-16">
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-2">
                         <div>
                             <label>
                                 <p class="text-xs mb-1">아이디</p>
                                 <input
                                     type="text"
                                     placeholder="아이디를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -28,7 +28,7 @@
                                 <input
                                     type="password"
                                     placeholder="비밀번호를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -37,7 +37,7 @@
                     <div>
                         <button
                             type="button"
-                            class="w-full text-sm py-4 bg-rose-500 text-white font-bold"
+                            class="w-full text-md py-4 bg-rose-500 text-white font-bold"
                         >
                             로그인
                         </button>

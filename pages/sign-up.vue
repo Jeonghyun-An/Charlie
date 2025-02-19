@@ -6,19 +6,19 @@
                     <Typography variant="h2" class="text-3xl"
                         >회원가입</Typography
                     >
-                    <Typography variant="body02" class="text-sm"
+                    <Typography variant="body02" class="text-xs"
                         >Charlie 서비스에 오신걸 환영합니다</Typography
                     >
                 </div>
                 <div class="px-8 flex flex-col gap-16">
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-2">
                         <div>
                             <label>
                                 <p class="text-xs mb-1">아이디</p>
                                 <input
                                     type="text"
                                     placeholder="아이디를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -28,7 +28,7 @@
                                 <input
                                     type="password"
                                     placeholder="영문, 숫자, 특수기호를 포함하여 8~16자를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -38,7 +38,7 @@
                                 <input
                                     type="password"
                                     placeholder="비밀번호를 한번 더 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -48,7 +48,7 @@
                                 <input
                                     type="text"
                                     placeholder="이름을 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-300 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -56,7 +56,7 @@
                     <div>
                         <button
                             type="button"
-                            class="w-full text-sm py-4 bg-rose-500 text-white font-bold"
+                            class="w-full text-md py-4 bg-rose-500 text-white font-bold"
                         >
                             회원가입
                         </button>
