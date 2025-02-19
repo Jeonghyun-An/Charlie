@@ -1,10 +1,12 @@
 <template>
-    <section class="flex">
+    <section class="flex min-h-screen">
         <article class="flex-1 flex justify-center items-center bg-white">
             <div class="w-[500px] rounded-md flex flex-col gap-12 px-4 py-16">
                 <div class="text-center grid gap-2">
-                    <Typography variant="h2">로그인</Typography>
-                    <Typography variant="body02"
+                    <Typography variant="h2" class="text-3xl"
+                        >로그인</Typography
+                    >
+                    <Typography variant="body02" class="text-sm"
                         >Charlie 서비스에 오신걸 환영합니다</Typography
                     >
                 </div>
@@ -16,7 +18,7 @@
                                 <input
                                     type="text"
                                     placeholder="아이디를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-slate-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
                                 />
                             </label>
                         </div>
@@ -26,7 +28,7 @@
                                 <input
                                     type="password"
                                     placeholder="비밀번호를 입력하세요"
-                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-slate-400 text-xs outline-none"
+                                    class="w-full px-4 py-4 bg-zinc-100 rounded-md text-slate-800 placeholder:text-zinc-400 text-xs outline-none"
                                 />
                             </label>
                         </div>
