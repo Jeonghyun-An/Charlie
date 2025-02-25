@@ -2,25 +2,27 @@
     <div class="flex h-screen">
         <!-- 좌측: 채팅 기록 목록 -->
         <div
-            class="chat-list w-[250px] p-1 border-r border-gray-300 flex flex-col bg-[#fffbfc] relative"
+            class="chat-list w-[250px] p-1 border-r border-[#cfbfbf] flex flex-col bg-[#fffbfc] relative"
         >
-            <div class="new-chat p-5">
+            <div>
                 <button
                     type="button"
-                    class="btn-new-chat bg-[rgb(255,227,232)] rounded w-4/5 mx-auto flex justify-center items-center"
+                    class="btn-new-chat bg-[rgb(255,227,232)] text-[#bc8f8f] rounded w-4/5 h-12 mx-auto m-[10%] flex justify-center items-center hover:bg-black"
                     @click="newChat"
                 >
                     NEW CHAT
                 </button>
             </div>
-            <div class="chat-list-header mx-4 pb-2 font-bold text-sm border-b">
+            <div
+                class="chat-list-header m-1 pb-2 font-bold text-xs border-b border-[#cfbfbf]"
+            >
                 채팅 목록
             </div>
-            <div class="chat-records flex-1 overflow-y-auto">
+            <div class="chat-records flex-1 overflow-y-auto text-sm">
                 <div
                     v-for="record in chatRecords"
                     :key="record.id"
-                    class="chat-record p-2 flex justify-between items-center cursor-pointer relative group"
+                    class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-[#ffe3e8] rounded-xl"
                     @click="selectChatRecord(record)"
                 >
                     <div
@@ -29,7 +31,7 @@
                         {{ record.title }}
                     </div>
                     <button
-                        class="menu-toggle invisible group-hover:visible text-rose-600 text-xl"
+                        class="menu-toggle invisible group-hover:visible text-[#bc8f8f] text-lg"
                         @click.stop="toggleMenu(record.id, $event)"
                     >
                         ···
@@ -39,45 +41,69 @@
         </div>
 
         <!-- 우측: 채팅 영역 -->
-        <div class="chat-window flex-1 flex flex-col relative">
-            <div v-if="activeChat" class="chat-title text-center mb-2 text-sm">
+        <div class="chat-window flex-1 flex flex-col relative text-wrap">
+            <div
+                v-if="activeChat"
+                class="chat-title text-center mb-2 text-sm text-[#cfbfbf]"
+            >
                 {{ activeChat.title }}
             </div>
             <div
-                class="chat-messages flex-1 flex flex-col gap-2 overflow-y-auto px-[15%]"
+                class="chat-messages flex-1 flex flex-col gap-2 overflow-y-auto px-[15%] break-words m-2"
                 ref="chatMessagesRef"
             >
                 <template v-if="activeChat">
                     <div
                         v-for="message in activeChat.messages"
                         :key="message.id"
-                        class="relative inline-flex w-fit max-w-full p-2 mt-5 rounded-xl break-words overflow-visible"
+                        class="relative inline-flex w-fit max-w-full p-2 mt-5 rounded-3xl break-words overflow-visible flex-wrap"
                         :class="
                             message.sender === 'user'
-                                ? 'ml-auto max-w-[80%] text-left pt-10'
-                                : 'mx-auto w-full border border-[mistyrose] p-8 text-left'
+                                ? 'ml-auto max-w-[80%] text-left pt-10 mt-10'
+                                : 'mx-auto w-full border border-[mistyrose] p-8 text-left bg-rose-50'
                         "
                     >
-                        <div class="flex-1">
+                        <div class="flex-1 whitespace-pre-wrap break-words">
                             {{ message.text }}
                         </div>
                         <!-- 사용자 액션: replay 버튼 (메시지 bubble 바깥쪽 오른쪽 하단) -->
                         <div
                             v-if="message.sender === 'user'"
-                            class="msg-actions user absolute bottom-[-10px] right-[-10px]"
+                            class="msg-actions user absolute bottom-[-10px] right-[-20px]"
                         >
                             <button
-                                class="replay-btn text-xs text-[hotpink] cursor-pointer"
+                                class="replay-btn text-xs text-pink-200 cursor-pointer"
                                 @click="replayMessage(message)"
                             >
                                 <!-- SVG 아이콘 대신 텍스트 "replay" 표시 -->
-                                replay
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 56 56"
+                                >
+                                    <path
+                                        fill="currentColor"
+                                        d="M28 51.906c13.055 0 23.906-10.828 23.906-23.906c0-13.055-10.875-23.906-23.93-23.906C14.899 4.094 4.095 14.945 4.095 28c0 13.078 10.828 23.906 23.906 23.906m0-3.984C16.937 47.922 8.1 39.062 8.1 28c0-11.04 8.813-19.922 19.876-19.922c11.039 0 19.921 8.883 19.945 19.922c.023 11.063-8.883 19.922-19.922 19.922m10.43-18.844c0-5.742-4.735-10.265-10.008-10.265a6 6 0 0 0-.657.046l1.665-1.687a1.6 1.6 0 0 0 .421-1.078c0-.82-.656-1.5-1.476-1.5c-.422 0-.82.187-1.078.469l-4.5 4.593c-.54.563-.586 1.617 0 2.157l4.547 4.546a1.5 1.5 0 0 0 1.03.446a1.47 1.47 0 0 0 1.477-1.477c0-.422-.164-.797-.445-1.078L27.11 22c.235-.047.563-.047.867-.047c4.008 0 7.22 3.188 7.22 7.195c0 4.032-3.212 7.266-7.22 7.266c-4.03 0-7.218-3.234-7.218-7.266c0-.867-.75-1.57-1.617-1.57c-.868 0-1.618.703-1.618 1.57c0 5.79 4.664 10.5 10.454 10.5c5.789 0 10.453-4.71 10.453-10.57"
+                                    />
+                                </svg>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 56 56"
+                                >
+                                    <path
+                                        fill="currentColor"
+                                        d="M28 51.906c13.055 0 23.906-10.851 23.906-23.906c0-13.078-10.875-23.906-23.93-23.906C14.899 4.094 4.095 14.922 4.095 28c0 13.055 10.828 23.906 23.906 23.906m10.594-22.922c0 5.953-4.735 10.735-10.617 10.735S17.36 34.937 17.36 29.055c0-.867.75-1.594 1.64-1.594c.892 0 1.642.727 1.642 1.594c0 4.101 3.234 7.383 7.336 7.383c4.078 0 7.335-3.282 7.335-7.383c0-4.055-3.257-7.29-7.335-7.29c-.305 0-.633 0-.868.047l2.32 2.274c.282.281.446.656.446 1.102c0 .82-.656 1.5-1.5 1.5c-.398 0-.774-.188-1.055-.47l-4.617-4.593c-.586-.562-.539-1.64 0-2.203l4.57-4.664c.258-.305.68-.469 1.102-.469c.844 0 1.5.68 1.5 1.524c0 .421-.14.82-.422 1.101l-1.687 1.688c.187-.024.445-.047.656-.047c5.367 0 10.172 4.593 10.172 10.43"
+                                    />
+                                </svg>
                             </button>
                         </div>
                         <!-- 봇 액션: 문서보기 버튼 (메시지 bubble 바깥쪽 왼쪽 하단) -->
                         <div
                             v-if="message.sender === 'bot'"
-                            class="msg-actions bot absolute bottom-[-10px] left-[-10px]"
+                            class="msg-actions bot absolute bottom-[-20px] left-[+5px]"
                         >
                             <button
                                 class="doc-btn text-xs text-[hotpink] cursor-pointer"
@@ -101,6 +127,7 @@
                         </div>
                     </div>
                 </template>
+
                 <div
                     v-else
                     class="chat-initial flex justify-center items-center h-full"
@@ -110,18 +137,28 @@
                         placeholder="질문을 입력하세요"
                         v-model="newMessage"
                         @keyup.enter="startChat"
-                        class="w-1/2 p-2"
+                        class="w-full p-2 outline-pink-300 outline-dashed rounded-full whitespace-pre-wrap"
                     />
                 </div>
             </div>
-            <div v-if="activeChat" class="chat-input p-5 pt-0 mx-10">
-                <input
-                    type="text"
-                    placeholder="메시지 입력..."
+            <!-- 아래 채팅 입력 부분을 <textarea>로 변경하여 Shift+Enter를 통한 줄바꿈 구현 -->
+            <div v-if="activeChat" class="p-5 pt-0 mx-20">
+                <textarea
+                    ref="textareaRef"
                     v-model="newMessage"
-                    @keyup.enter="sendMessage"
-                    class="w-full p-2 outline-pink outline-dashed rounded-full"
-                />
+                    @keydown="handleKeydown"
+                    placeholder="질문을 입력하세요"
+                    rows="2"
+                    class="w-full px-3 py-2 outline-pink-300 outline-dashed rounded-3xl resize-none"
+                ></textarea>
+
+                <!-- 제출 버튼 (Enter 단독 제출 외에도 버튼 클릭 제출) -->
+                <button
+                    @click="sendMessage"
+                    class="mt-2 px-4 py-2 bg-pink-300 text-white rounded"
+                >
+                    Submit
+                </button>
             </div>
         </div>
 
@@ -152,20 +189,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from "vue";
+import { ref, reactive, nextTick, watch } from "vue";
+import { useTextareaAutosize } from "@vueuse/core";
+import { onClickOutside } from "@vueuse/core";
 
-// 커스텀 v-click-outside 디렉티브
+// 커스텀 v-click-outside 디렉티브 (vueuse onClickOutside 사용)
 const clickOutside = {
     mounted(el, binding) {
-        el.clickOutsideEvent = (event) => {
-            if (!(el === event.target || el.contains(event.target))) {
-                binding.value(event);
-            }
-        };
-        document.addEventListener("click", el.clickOutsideEvent);
+        el.clickOutsideEvent = onClickOutside(el, binding.value);
     },
     unmounted(el) {
-        document.removeEventListener("click", el.clickOutsideEvent);
+        if (el.clickOutsideEvent) el.clickOutsideEvent();
     },
 };
 defineExpose({ directives: { "click-outside": clickOutside } });
@@ -201,7 +235,24 @@ const chatRecords = reactive([
     {
         id: 3,
         title: "채팅 3",
-        messages: [{ id: 301, text: "채팅 3", sender: "user" }],
+        messages: [
+            { id: 301, text: "채팅 3", sender: "user" },
+            {
+                id: 301,
+                text: "채팅 3sssssssssssssssazffffffsddsdsdsdsd",
+                sender: "bot",
+            },
+            {
+                id: 301,
+                text: "채팅 3222222222222222233333333054933333333333333333333333333339999999999999999444444444444444444444444444444444444444444444444499999999999999999999999999955555555555555",
+                sender: "user",
+            },
+            {
+                id: 301,
+                text: "채팅 asdasdasdasdddddddddddddddddddddddddddddddddssssssssssssssssssssssssssssssssssssssssssssssssssssssssaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa3",
+                sender: "bot",
+            },
+        ],
     },
     {
         id: 4,
@@ -224,8 +275,40 @@ const activeMenuId = ref(null);
 const menuStyle = reactive({ top: "0px", left: "0px" });
 
 const chatMessagesRef = ref(null);
-const chatListRef = ref(null);
 const teleportMenuRef = ref(null);
+const textareaRef = ref(null);
+const MAX_HEIGHT = 200; // 최대 높이(px)
+// const { textarea } = useTextareaAutosize({
+//     styleProp: "minHeight",
+//     maxRows: 4,
+// });
+function updateHeight() {
+    const el = textareaRef.value;
+    if (!el) return;
+    // 높이를 초기화하고 scrollHeight 측정
+    el.style.height = "auto";
+    const newHeight = el.scrollHeight;
+    if (newHeight > MAX_HEIGHT) {
+        el.style.height = MAX_HEIGHT + "px";
+        el.style.overflowY = "auto";
+    } else {
+        el.style.height = newHeight + "px";
+        el.style.overflowY = "hidden";
+    }
+}
+
+watch(newMessage, () => {
+    nextTick(updateHeight);
+});
+
+// --- Shift+Enter 처리 추가 ---
+// handleKeydown 함수: Shift+Enter는 줄바꿈, Enter(단독)는 전송
+function handleKeydown(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault(); // Enter 단독일 때 기본 줄바꿈 방지
+        sendMessage();
+    }
+}
 
 function selectChatRecord(record) {
     activeChat.value = record;
@@ -272,8 +355,8 @@ function sendMessage() {
             sender: "user",
         });
         const userText = newMessage.value;
-        newMessage.value = "";
-        nextTick(() => {
+        newMessage.value = ""; // 입력창을 비움
+        nextTick((updateHeight) => {
             if (chatMessagesRef.value) {
                 chatMessagesRef.value.scrollTop =
                     chatMessagesRef.value.scrollHeight;
@@ -296,6 +379,7 @@ function sendMessage() {
         }, 500);
     }
 }
+
 function replayMessage(message) {
     newMessage.value = message.text;
 }
@@ -311,50 +395,6 @@ function getRecordById(id) {
 </script>
 
 <style scoped lang="scss">
-.chat-app {
-    display: flex;
-    height: 100vh;
-}
-
-/* 좌측 채팅 기록 목록 */
-.chat-list {
-    border-right: 1px solid rgb(207, 191, 191);
-}
-.new-chat {
-    padding: 5%;
-}
-.btn-new-chat {
-    color: rosybrown;
-    background-color: rgb(255, 227, 232);
-    border-radius: 4px;
-    height: 60%;
-    margin: 10%;
-}
-
-.btn-new-chat:hover {
-    background-color: black;
-}
-
-.chat-list-header {
-    margin: 16px;
-    font-weight: bold;
-    font-size: small;
-    border-bottom: 1px solid rgb(207, 191, 191);
-}
-
-.chat-records {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.chat-record {
-}
-
-.chat-record:hover {
-    background-color: rgb(255, 227, 232);
-    border-radius: 100px;
-}
-
 .record-title {
     flex: 1;
     margin-right: 10px;
@@ -374,144 +414,24 @@ function getRecordById(id) {
     );
 }
 
-/* 메뉴 토글 버튼 */
-.menu-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2em;
-    visibility: hidden;
-    color: rosybrown;
-}
-.chat-record:hover .menu-toggle {
-    visibility: visible;
-}
-
-/* 우측 채팅 영역 */
-.chat-window {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    text-wrap: wrap;
-}
-
-.chat-title {
-    color: rgb(207, 191, 191);
-}
-
-/* 메시지 스타일: 사용자 메시지(오른쪽)와 봇 메시지(왼쪽) */
-.chat-messages {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow-y: auto;
-    padding-left: 15%;
-    padding-right: 15%;
-    margin-top: 5%;
-    margin: 2%;
-}
-
-.chat-message {
-    position: relative;
-    display: flex;
-    width: fit-content;
-    max-width: 100%;
-    padding: 10px;
-    margin-top: 3%;
-    border-radius: 10px;
-    word-break: break-word;
-}
-
-/* 유저 메시지는 오른쪽 정렬 */
-.chat-message.user {
-    background-color: rgb(256, 227, 232);
-    margin-left: auto;
-    margin-top: 80px;
-    text-align: left;
-    max-width: 80%;
-}
-
-/* 봇 메시지는 중앙 정렬 */
-.chat-message.bot {
-    background-color: rgb(253, 246, 245);
-    margin-right: auto;
-    margin-left: auto;
-    text-align: left;
-    border-radius: 0;
-    width: 100%;
-    border: solid mistyrose;
-    padding: 30px;
-}
-/* 액션 버튼 컨테이너: 메시지 박스 바깥쪽 하단에 위치 (버튼들 자체는 별도 스타일) */
-.msg-actions {
-    position: absolute;
-    bottom: -20px; /* 메시지 박스 바깥쪽에 위치 (필요시 값을 조정) */
-    z-index: 2;
-    @apply flex;
-}
-
-/* 사용자 메시지의 액션 버튼: 오른쪽 하단에 위치 */
-.msg-actions.user {
-    right: -20px;
-    bottom: -10px;
-    font-weight: bold;
-}
-
-/* 봇 메시지의 액션 버튼: 왼쪽 하단에 위치 */
-.msg-actions.bot {
-    left: 5px;
-}
-
-/* 액션 버튼 자체 스타일 (필요에 따라 추가 조정) */
-.replay-btn,
-.doc-btn {
-    background: none;
-    border: none;
-    font-size: 0.8em;
-    color: hotpink;
-    cursor: pointer;
-}
-
-/* 문서 목록 스타일 */
-.doc-list {
-    margin-top: 5px;
-    font-size: 0.8em;
-    color: #555;
-}
-.doc-list ul {
-    list-style-type: disc;
-    margin-left: 20px;
-    padding: 0;
-}
-
-/* 하단 입력창 */
-.chat-input {
-    padding: 5%;
-    padding-top: 0%;
-    margin-left: 10%;
-    margin-right: 10%;
-}
-
-.chat-input input {
-    width: 100%;
-    padding: 10px;
-    outline-color: pink;
-    outline-style: dashed;
-    border-radius: 100px;
-}
-
-/* 초기 상태 중앙 입력창 */
-.chat-initial {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.chat-initial input {
-    width: 50%;
-    padding: 8px;
+/* 액션 버튼 자체 스타일  */
+.replay-btn {
+    width: 25px;
+    height: 40px;
+    &:hover {
+        > svg {
+            &:nth-child(1) {
+                display: none;
+            }
+            &:nth-child(2) {
+                display: block;
+            }
+        }
+    }
+    > svg {
+        &:nth-child(2) {
+            display: none;
+        }
+    }
 }
 </style>
