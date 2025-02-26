@@ -7,7 +7,7 @@
             <div>
                 <button
                     type="button"
-                    class="btn-new-chat bg-[rgb(255,227,232)] text-[#bc8f8f] rounded w-4/5 h-12 mx-auto m-[10%] flex justify-center items-center hover:bg-black"
+                    class="btn-new-chat bg-[rgb(255,227,232)] text-[#bc8f8f] rounded w-4/5 h-12 mx-auto m-[10%] flex justify-center items-center shadow-md hover:bg-black"
                     @click="newChat"
                 >
                     NEW CHAT
@@ -22,7 +22,7 @@
                 <div
                     v-for="record in chatRecords"
                     :key="record.id"
-                    class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-[#ffe3e8] rounded-xl"
+                    class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-[#ffe3e8] hover:shadow- rounded-xl"
                     @click="selectChatRecord(record)"
                 >
                     <div
@@ -49,33 +49,34 @@
                 {{ activeChat.title }}
             </div>
             <div
-                class="chat-messages flex-1 flex flex-col gap-2 overflow-y-auto px-[15%] break-words m-2"
+                class="chat-messages flex-1 flex flex-col gap-2 overflow-y-auto px-[20%] break-words break-keep m-1"
                 ref="chatMessagesRef"
             >
                 <template v-if="activeChat">
                     <div
                         v-for="message in activeChat.messages"
                         :key="message.id"
-                        class="relative inline-flex w-fit max-w-full p-2 mt-5 rounded-3xl break-words overflow-visible flex-wrap"
+                        class="relative inline-flex p-1 mt-5 rounded-3xl break-words flex-wrap"
                         :class="
                             message.sender === 'user'
-                                ? 'ml-auto max-w-[80%] text-left pt-10 mt-10'
-                                : 'mx-auto w-full border border-[mistyrose] p-8 text-left bg-rose-50'
+                                ? 'ml-auto max-w-[70%] text-left  mt-10 p-5 border-[mistyrose]  bg-rose-50 shadow-xs'
+                                : 'mx-auto w-full mb-10 text-left'
                         "
                     >
-                        <div class="flex-1 whitespace-pre-wrap break-words">
+                        <div
+                            class="flex-1 whitespace-pre-wrap break-words overflow-auto"
+                        >
                             {{ message.text }}
                         </div>
                         <!-- 사용자 액션: replay 버튼 (메시지 bubble 바깥쪽 오른쪽 하단) -->
                         <div
                             v-if="message.sender === 'user'"
-                            class="msg-actions user absolute bottom-[-10px] right-[-20px]"
+                            class="absolute bottom-[-15px] right-[-25px]"
                         >
                             <button
                                 class="replay-btn text-xs text-pink-200 cursor-pointer"
                                 @click="replayMessage(message)"
                             >
-                                <!-- SVG 아이콘 대신 텍스트 "replay" 표시 -->
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -103,19 +104,19 @@
                         <!-- 봇 액션: 문서보기 버튼 (메시지 bubble 바깥쪽 왼쪽 하단) -->
                         <div
                             v-if="message.sender === 'bot'"
-                            class="msg-actions bot absolute bottom-[-20px] left-[+5px]"
+                            class="absolute bottom-[-20px] left-[+5px]"
                         >
                             <button
-                                class="doc-btn text-xs text-[hotpink] cursor-pointer"
+                                class="text-xs text-[hotpink] cursor-pointer"
                                 @click="toggledocs(message)"
                             >
                                 문서보기
                             </button>
                             <div
                                 v-if="message.showDocs"
-                                class="doc-list mt-1 text-xs text-gray-500"
+                                class="mt-1 text-xs text-gray-500"
                             >
-                                <ul class="list-disc ml-5 p-0">
+                                <ul class="ml-5 p-0">
                                     <li
                                         v-for="(doc, index) in message.docs"
                                         :key="index"
@@ -128,10 +129,7 @@
                     </div>
                 </template>
 
-                <div
-                    v-else
-                    class="chat-initial flex justify-center items-center h-full"
-                >
+                <div v-else class="flex justify-center items-center h-full">
                     <input
                         type="text"
                         placeholder="질문을 입력하세요"
@@ -142,23 +140,55 @@
                 </div>
             </div>
             <!-- 아래 채팅 입력 부분을 <textarea>로 변경하여 Shift+Enter를 통한 줄바꿈 구현 -->
-            <div v-if="activeChat" class="p-5 pt-0 mx-20">
+            <div
+                v-if="activeChat"
+                class="p-3 mx-[20%] m-5 mt-0 outline-pink-300 outline-dashed rounded-3xl shadow-lg"
+            >
                 <textarea
                     ref="textareaRef"
                     v-model="newMessage"
                     @keydown="handleKeydown"
                     placeholder="질문을 입력하세요"
                     rows="2"
-                    class="w-full px-3 py-2 outline-pink-300 outline-dashed rounded-3xl resize-none"
+                    class="w-full px-2 py-2 resize-none outline-none"
                 ></textarea>
-
-                <!-- 제출 버튼 (Enter 단독 제출 외에도 버튼 클릭 제출) -->
-                <button
-                    @click="sendMessage"
-                    class="mt-2 px-4 py-2 bg-pink-300 text-white rounded"
-                >
-                    Submit
-                </button>
+                <div class="flex justify-between items-center">
+                    <button
+                        class="px-1 cursor-pointer text-xs text-zinc-600 hover:text-pink-300"
+                        @click="toggledocs(message)"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="28"
+                            height="28"
+                            viewBox="0 0 56 56"
+                        >
+                            <path
+                                fill="currentColor"
+                                d="M28 51.906c13.055 0 23.906-10.828 23.906-23.906c0-13.055-10.875-23.906-23.93-23.906C14.899 4.094 4.095 14.945 4.095 28c0 13.078 10.828 23.906 23.906 23.906m0-3.984C16.937 47.922 8.1 39.062 8.1 28c0-11.04 8.813-19.922 19.876-19.922c11.039 0 19.921 8.883 19.945 19.922c.023 11.063-8.883 19.922-19.922 19.922m-.07-8.79c1.265 0 2.015-.866 2.015-2.226V29.97h7.336c1.313 0 2.227-.68 2.227-1.922c0-1.266-.867-1.992-2.227-1.992h-7.336v-7.36c0-1.383-.75-2.226-2.015-2.226c-1.243 0-1.922.89-1.922 2.226v7.36h-7.313c-1.383 0-2.25.726-2.25 1.992c0 1.242.938 1.922 2.25 1.922h7.313v6.937c0 1.313.68 2.227 1.922 2.227"
+                            />
+                        </svg>
+                    </button>
+                    <!-- 제출 버튼 (Enter 단독 제출 외에도 버튼 클릭 제출) -->
+                    <button
+                        @click="sendMessage"
+                        class="text-zinc-600 hover:text-pink-300"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="28"
+                            height="28"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                fill="currentColor"
+                                fill-rule="evenodd"
+                                d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -190,7 +220,6 @@
 
 <script setup>
 import { ref, reactive, nextTick, watch } from "vue";
-import { useTextareaAutosize } from "@vueuse/core";
 import { onClickOutside } from "@vueuse/core";
 
 // 커스텀 v-click-outside 디렉티브 (vueuse onClickOutside 사용)
@@ -232,28 +261,7 @@ const chatRecords = reactive([
             },
         ],
     },
-    {
-        id: 3,
-        title: "채팅 3",
-        messages: [
-            { id: 301, text: "채팅 3", sender: "user" },
-            {
-                id: 301,
-                text: "채팅 3sssssssssssssssazffffffsddsdsdsdsd",
-                sender: "bot",
-            },
-            {
-                id: 301,
-                text: "채팅 3222222222222222233333333054933333333333333333333333333339999999999999999444444444444444444444444444444444444444444444444499999999999999999999999999955555555555555",
-                sender: "user",
-            },
-            {
-                id: 301,
-                text: "채팅 asdasdasdasdddddddddddddddddddddddddddddddddssssssssssssssssssssssssssssssssssssssssssssssssssssssssaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa3",
-                sender: "bot",
-            },
-        ],
-    },
+
     {
         id: 4,
         title: "채팅 11111111111111111111111111111111111111111ㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴ111",
@@ -356,7 +364,7 @@ function sendMessage() {
         });
         const userText = newMessage.value;
         newMessage.value = ""; // 입력창을 비움
-        nextTick((updateHeight) => {
+        nextTick(() => {
             if (chatMessagesRef.value) {
                 chatMessagesRef.value.scrollTop =
                     chatMessagesRef.value.scrollHeight;
