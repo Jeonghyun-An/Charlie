@@ -47,8 +47,9 @@
                 {{ activeChat ? activeChat.title : "채팅을 시작하세요" }}
             </div>
             <div
-                class="flex-1 flex flex-col gap-2 overflow-y-auto px-[20%] break-words break-keep m-1"
+                class="flex-1 flex flex-col gap-2 overflow-y-auto px-[20%] m-1 break-words break-keep"
                 ref="chatMessagesRef"
+                style="scrollbar-gutter: stable"
             >
                 <template v-if="activeChat">
                     <div
@@ -66,7 +67,6 @@
                         >
                             {{ message.text }}
                         </div>
-                        <!-- 사용자 액션: replay 버튼 (메시지 bubble 바깥쪽 오른쪽 하단) -->
                         <div
                             v-if="message.sender === 'user'"
                             class="absolute bottom-[-15px] right-[-25px]"
@@ -99,7 +99,6 @@
                                 </svg>
                             </button>
                         </div>
-                        <!-- 봇 액션: 문서보기 버튼 (메시지 bubble 바깥쪽 왼쪽 하단) -->
                         <div
                             v-if="message.sender === 'bot'"
                             class="absolute bottom-[-20px] left-[+5px]"
@@ -128,16 +127,39 @@
                 </template>
 
                 <div v-else class="flex justify-center items-center h-full">
-                    <input
-                        type="text"
-                        placeholder="질문을 입력하세요"
-                        v-model="newMessage"
-                        @keyup.enter="startChat"
-                        class="w-full p-2 outline-none shadow-lg rounded-full whitespace-pre-wrap border"
-                    />
+                    <div
+                        class="p-3 w-full m-5 mt-0 border rounded-3xl shadow-lg"
+                    >
+                        <textarea
+                            ref="textareaRef"
+                            v-model="newMessage"
+                            @keydown="handleKeydown"
+                            placeholder="질문을 입력하세요"
+                            rows="2"
+                            class="w-full px-2 py-2 resize-none outline-none"
+                        ></textarea>
+                        <div class="flex justify-between items-center py-1">
+                            <button
+                                class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
+                                @click="toggledocs(message)"
+                            >
+                                <Icon
+                                    size="24px"
+                                    name="mdi:paperclip"
+                                    class="text-zinc-400 hover:text-zinc-800"
+                                />
+                            </button>
+                            <button @click="startChat">
+                                <Icon
+                                    size="20px"
+                                    name="qlementine-icons:send-16"
+                                    class="text-zinc-400 hover:text-zinc-800"
+                                />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- 아래 채팅 입력 부분을 <textarea>로 변경하여 Shift+Enter를 통한 줄바꿈 구현 -->
             <div
                 v-if="activeChat"
                 class="p-3 mx-[20%] m-5 mt-0 border rounded-3xl shadow-lg"
@@ -173,7 +195,6 @@
             </div>
         </div>
 
-        <!-- Teleport: 컨텍스트 메뉴 (v-click-outside 디렉티브 사용) -->
         <teleport to="body">
             <div
                 v-if="activeMenuId"
@@ -203,7 +224,6 @@
 import { ref, reactive, nextTick, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
 
-// 커스텀 v-click-outside 디렉티브 (vueuse onClickOutside 사용)
 const clickOutside = {
     mounted(el, binding) {
         el.clickOutsideEvent = onClickOutside(el, binding.value);
@@ -266,7 +286,7 @@ const menuStyle = reactive({ top: "0px", left: "0px" });
 const chatMessagesRef = ref(null);
 const teleportMenuRef = ref(null);
 const textareaRef = ref(null);
-const MAX_HEIGHT = 200; // 최대 높이(px)
+const MAX_HEIGHT = 200;
 // const { textarea } = useTextareaAutosize({
 //     styleProp: "minHeight",
 //     maxRows: 4,
@@ -274,7 +294,6 @@ const MAX_HEIGHT = 200; // 최대 높이(px)
 function updateHeight() {
     const el = textareaRef.value;
     if (!el) return;
-    // 높이를 초기화하고 scrollHeight 측정
     el.style.height = "auto";
     const newHeight = el.scrollHeight;
     if (newHeight > MAX_HEIGHT) {
@@ -290,12 +309,14 @@ watch(newMessage, () => {
     nextTick(updateHeight);
 });
 
-// --- Shift+Enter 처리 추가 ---
-// handleKeydown 함수: Shift+Enter는 줄바꿈, Enter(단독)는 전송
 function handleKeydown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault(); // Enter 단독일 때 기본 줄바꿈 방지
-        sendMessage();
+        event.preventDefault();
+        if (!activeChat.value) {
+            startChat();
+        } else {
+            sendMessage();
+        }
     }
 }
 
@@ -344,7 +365,7 @@ function sendMessage() {
             sender: "user",
         });
         const userText = newMessage.value;
-        newMessage.value = ""; // 입력창을 비움
+        newMessage.value = "";
         nextTick(() => {
             if (chatMessagesRef.value) {
                 chatMessagesRef.value.scrollTop =
