@@ -18,19 +18,19 @@
             </div>
             <div class="chat-records flex-1 overflow-y-auto text-sm">
                 <div
-                    v-for="record in chatRecords"
-                    :key="record.id"
-                    class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-zinc-200 hover:shadow rounded-xl"
-                    @click="selectChatRecord(record)"
+                    v-for="room in chatRecords"
+                    :key="room._id"
+                    class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-[#e3e3e3] hover:shadow rounded-xl"
+                    @click="selectChatroom(room)"
                 >
                     <div
                         class="record-title flex-1 mr-2 whitespace-nowrap overflow-hidden"
                     >
-                        {{ record.title }}
+                        {{ room.title }}
                     </div>
                     <button
                         class="menu-toggle invisible group-hover:visible text-zinc-400 text-lg"
-                        @click.stop="toggleMenu(record.id, $event)"
+                        @click.stop="toggleMenu(room._id, $event)"
                     >
                         ···
                     </button>
@@ -53,27 +53,27 @@
             >
                 <template v-if="activeChat">
                     <div
-                        v-for="message in activeChat.messages"
-                        :key="message.id"
+                        v-for="chat in activeChat.chats"
+                        :key="chat._id"
                         class="relative inline-flex p-1 mt-5 rounded-3xl break-words flex-wrap text-zinc-900"
                         :class="
-                            message.sender === 'user'
-                                ? 'ml-auto max-w-[70%] text-left  mt-10 p-4 bg-zinc-100 shadow-xs'
+                            chat.sender === 'user'
+                                ? 'ml-auto max-w-[70%] text-left  mt-10 p-4 bg-[#f3f3f3] shadow-xs'
                                 : 'mx-auto w-full mb-10 text-left'
                         "
                     >
                         <div
                             class="flex-1 whitespace-pre-wrap break-words overflow-auto"
                         >
-                            {{ message.text }}
+                            {{ chat.text }}
                         </div>
                         <div
-                            v-if="message.sender === 'user'"
+                            v-if="chat.sender === 'user'"
                             class="absolute bottom-[-15px] right-[-25px]"
                         >
                             <button
                                 class="replay-btn text-xs text-zinc-300 cursor-pointer"
-                                @click="replayMessage(message)"
+                                @click="replayMessage(chat)"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -100,22 +100,22 @@
                             </button>
                         </div>
                         <div
-                            v-if="message.sender === 'bot'"
+                            v-if="chat.sender === 'bot'"
                             class="absolute bottom-[-20px] left-[+5px]"
                         >
                             <button
                                 class="text-xs text-zinc-500 cursor-pointer"
-                                @click="toggledocs(message)"
+                                @click="toggledocs(chat)"
                             >
                                 >
                             </button>
                             <div
-                                v-if="message.showDocs"
+                                v-if="chat.showDocs"
                                 class="mt-1 text-xs text-zinc-400"
                             >
                                 <ul class="ml-5 p-0">
                                     <li
-                                        v-for="(doc, index) in message.docs"
+                                        v-for="(doc, index) in chat.docs"
                                         :key="index"
                                     >
                                         {{ doc }}
@@ -223,6 +223,10 @@
 <script setup>
 import { ref, reactive, nextTick, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
+import axios from "axios";
+
+//mongoDB
+const API_URL = "http://localhost:3001/api";
 
 const clickOutside = {
     mounted(el, binding) {
@@ -235,49 +239,50 @@ const clickOutside = {
 defineExpose({ directives: { "click-outside": clickOutside } });
 
 // 더미 데이터
-const chatRecords = reactive([
-    {
-        id: 1,
-        title: "채팅 11111111111111111111111111111111111111111111",
-        messages: [
-            { id: 102, text: "메시지 1", sender: "user" },
-            {
-                id: 103,
-                text: "메시지 2",
-                sender: "bot",
-                docs: ["문서 A", "문서 B"],
-                showDocs: false,
-            },
-        ],
-    },
-    {
-        id: 2,
-        title: "채팅 2",
-        messages: [
-            { id: 201, text: "채팅 2", sender: "user" },
-            {
-                id: 202,
-                text: "두 번째 메시지\nns\ns\ns\ndfdfdf...",
-                sender: "bot",
-            },
-        ],
-    },
+// const chatRecords = reactive([
+//     {
+//         id: 1,
+//         title: "채팅 11111111111111111111111111111111111111111111",
+//         messages: [
+//             { id: 102, text: "메시지 1", sender: "user" },
+//             {
+//                 id: 103,
+//                 text: "메시지 2",
+//                 sender: "bot",
+//                 docs: ["문서 A", "문서 B"],
+//                 showDocs: false,
+//             },
+//         ],
+//     },
+//     {
+//         id: 2,
+//         title: "채팅 2",
+//         messages: [
+//             { id: 201, text: "채팅 2", sender: "user" },
+//             {
+//                 id: 202,
+//                 text: "두 번째 메시지\nns\ns\ns\ndfdfdf...",
+//                 sender: "bot",
+//             },
+//         ],
+//     },
 
-    {
-        id: 4,
-        title: "채팅 11111111111111111111111111111111111111111ㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴ111",
-        messages: [
-            { id: 401, text: "채팅 1", sender: "user" },
-            { id: 402, text: "메시지 1", sender: "bot" },
-            {
-                id: 404,
-                text: "채팅 222222222222222222222222222222222222222222222222222222222",
-                sender: "user",
-            },
-            { id: 403, text: "메시지 2", sender: "bot" },
-        ],
-    },
-]);
+//     {
+//         id: 4,
+//         title: "채팅 11111111111111111111111111111111111111111ㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴㄴ111",
+//         messages: [
+//             { id: 401, text: "채팅 1", sender: "user" },
+//             { id: 402, text: "메시지 1", sender: "bot" },
+//             {
+//                 id: 404,
+//                 text: "채팅 222222222222222222222222222222222222222222222222222222222",
+//                 sender: "user",
+//             },
+//             { id: 403, text: "메시지 2", sender: "bot" },
+//         ],
+//     },
+// ]);
+const chatRecords = ref([]);
 const activeChat = ref(null);
 const newMessage = ref("");
 const activeMenuId = ref(null);
@@ -309,19 +314,23 @@ watch(newMessage, () => {
     nextTick(updateHeight);
 });
 
-function handleKeydown(event) {
+// 키 이벤트 처리: async로 선언
+async function handleKeydown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
+        // activeChat이 없으면 startChat()을 기다린 후 sendMessage() 실행
         if (!activeChat.value) {
-            startChat();
+            await startChat();
+            // startChat() 내에서 sendMessage()를 호출하거나, 여기서 따로 호출할 수 있습니다.
         } else {
-            sendMessage();
+            await sendMessage();
         }
     }
 }
 
-function selectChatRecord(record) {
-    activeChat.value = record;
+function selectChatroom(room) {
+    // API를 통해 채팅방 상세 정보를 불러옵니다.
+    fetchChatroom(room._id);
 }
 function newChat() {
     activeChat.value = null;
@@ -344,70 +353,123 @@ function deleteRecord(record) {
     alert(`삭제: ${record.title}`);
     activeMenuId.value = null;
 }
-function startChat() {
-    if (!activeChat.value) {
-        const creationTime = new Date();
-        const newChatroom = {
-            id: Date.now(),
-            title: creationTime.toLocaleTimeString(),
-            messages: [],
-        };
-        chatRecords.push(newChatroom);
-        activeChat.value = newChatroom;
+
+// API 호출: 채팅방 목록 불러오기
+async function fetchChatrooms() {
+    try {
+        const res = await axios.get(`${API_URL}/chatrooms`);
+        if (res.data.success) {
+            chatRecords.value = res.data.data;
+        }
+    } catch (err) {
+        console.error("채팅방 불러오기 실패:", err);
     }
-    sendMessage();
 }
-function sendMessage() {
-    if (newMessage.value.trim() !== "") {
-        activeChat.value.messages.push({
-            id: Date.now(),
-            text: newMessage.value,
-            sender: "user",
-        });
-        const userText = newMessage.value;
-        newMessage.value = "";
-        nextTick(() => {
-            if (chatMessagesRef.value) {
-                chatMessagesRef.value.scrollTop =
-                    chatMessagesRef.value.scrollHeight;
+
+// API 호출: 특정 채팅방 불러오기
+async function fetchChatroom(id) {
+    try {
+        const res = await axios.get(`${API_URL}/chatrooms/${id}`);
+        if (res.data.success) {
+            activeChat.value = res.data.data;
+        }
+    } catch (err) {
+        console.error("채팅방 상세 불러오기 실패:", err);
+    }
+}
+
+// 채팅 시작 및 전송: activeChat이 없으면 채팅방 생성 후 메시지 전송
+async function startChat() {
+    if (!activeChat.value) {
+        try {
+            const creationTime = new Date();
+            const title = creationTime.toLocaleTimeString();
+            const res = await axios.post(`${API_URL}/chatrooms`, { title });
+            if (res.data.success) {
+                chatRecords.value.push(res.data.data);
+                activeChat.value = res.data.data;
             }
-        });
-        setTimeout(() => {
-            activeChat.value.messages.push({
-                id: Date.now() + 1,
-                text: "더미 메시지 " + userText,
-                sender: "bot",
-                docs: ["참고 문서 1"],
-                showDocs: false,
-            });
+        } catch (err) {
+            console.error("채팅방 생성 실패:", err);
+        }
+    }
+    await sendMessage();
+}
+
+// 채팅 메시지 전송: API 호출을 통해 채팅 메시지 추가
+async function sendMessage() {
+    console.log("send:" + newMessage.value);
+    if (newMessage.value.trim() !== "") {
+        try {
+            const payload = { text: newMessage.value, sender: "user" };
+            const res = await axios.post(
+                `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
+                payload
+            );
+            if (res.data.success) {
+                activeChat.value.chats.push(res.data.data);
+            }
+            const userText = newMessage.value;
+            newMessage.value = "";
             nextTick(() => {
                 if (chatMessagesRef.value) {
                     chatMessagesRef.value.scrollTop =
                         chatMessagesRef.value.scrollHeight;
                 }
+                updateHeight();
             });
-        }, 500);
+            // 예시: 500ms 후 더미 봇 메시지 전송
+            setTimeout(async () => {
+                try {
+                    const botPayload = {
+                        text: "더미 메시지 " + userText,
+                        sender: "bot",
+                        docs: ["참고 문서 1"],
+                    };
+                    const botRes = await axios.post(
+                        `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
+                        botPayload
+                    );
+                    if (botRes.data.success) {
+                        activeChat.value.chats.push(botRes.data.data);
+                    }
+                } catch (err) {
+                    console.error("봇 메시지 전송 실패:", err);
+                }
+                nextTick(() => {
+                    if (chatMessagesRef.value) {
+                        chatMessagesRef.value.scrollTop =
+                            chatMessagesRef.value.scrollHeight;
+                    }
+                });
+            }, 500);
+        } catch (err) {
+            console.error("메시지 전송 실패:", err);
+        }
     }
 }
 
-function replayMessage(message) {
-    newMessage.value = message.text;
+function replayMessage(chat) {
+    newMessage.value = chat.text;
 }
-function toggledocs(message) {
-    message.showDocs = !message.showDocs;
+function toggledocs(chat) {
+    chat.showDocs = !chat.showDocs;
 }
 function handleMenuMouseLeave() {
     activeMenuId.value = null;
 }
 function getRecordById(id) {
-    return chatRecords.find((record) => record.id === id);
+    return chatRecords.value.find((room) => room._id === id);
 }
+
+// 페이지 마운트 시 채팅방 목록 불러오기
+onMounted(fetchChatrooms);
 </script>
 
 <style scoped lang="scss">
 .record-title {
     flex: 1;
-    margin-right: 10px;
+    margin-right: 8px;
     white-space: nowrap;
     overflow: hidden;
     -webkit-mask-image: linear-gradient(
