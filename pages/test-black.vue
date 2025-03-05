@@ -140,6 +140,7 @@
                             @keydown="handleKeydown"
                             placeholder="질문을 입력하세요"
                             rows="2"
+                            autofocus
                             class="w-full px-2 py-2 resize-none outline-none"
                         ></textarea>
                         <div class="flex justify-between items-center py-1">
@@ -174,6 +175,7 @@
                     @keydown="handleKeydown"
                     placeholder="질문을 입력하세요"
                     rows="2"
+                    autofocus
                     class="w-full px-2 py-2 resize-none outline-none"
                 ></textarea>
                 <div class="flex justify-between items-center py-1">
