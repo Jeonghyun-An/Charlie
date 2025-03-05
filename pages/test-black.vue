@@ -126,10 +126,14 @@
                     </div>
                 </template>
 
-                <div v-else class="flex justify-center items-center h-full">
-                    <div
-                        class="p-3 w-full m-5 mt-0 border rounded-3xl shadow-lg"
-                    >
+                <div
+                    v-else
+                    class="flex flex-col justify-center items-center h-full"
+                >
+                    <div class="text-3xl font-semibold pb-2 text-zinc-800">
+                        무엇을 도와드릴까요?
+                    </div>
+                    <div class="p-3 w-full m-5 border rounded-3xl shadow-lg">
                         <textarea
                             ref="textareaRef"
                             v-model="newMessage"
