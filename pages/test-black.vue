@@ -389,6 +389,12 @@ async function fetchChatroom(id) {
         const res = await axios.get(`${API_URL}/chatrooms/${id}`);
         if (res.data.success) {
             activeChat.value = res.data.data;
+            nextTick(() => {
+                if (chatMessagesRef.value) {
+                    chatMessagesRef.value.scrollTop =
+                        chatMessagesRef.value.scrollHeight;
+                }
+            });
         }
     } catch (err) {
         console.error("채팅방 상세 불러오기 실패:", err);
