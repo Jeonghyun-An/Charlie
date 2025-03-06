@@ -6,21 +6,40 @@
             class="w-[230px] p-1 flex flex-col bg-zinc-50 relative transition-all duration-300 shadow-md"
         >
             <div
-                class="flex justify-between items-center px-3 py-3 border-b border-double"
+                class="flex justify-between items-center py-3 px-2 border-b border-double"
             >
-                <button
-                    @click="toggleSidebar"
-                    class="flex w-6 h-6 text-zinc-500 hover:text-zinc-900 text-sm"
-                >
-                    ❮❮
-                </button>
-                <button
-                    type="button"
-                    class="flex justify-center items-center w-1/3 h-8 bg-zinc-950 text-white rounded shadow-md hover:bg-zinc-700 text-xs"
-                    @click="newChat"
-                >
-                    NEW CHAT
-                </button>
+                <div class="relative group">
+                    <button
+                        @click="toggleSidebar"
+                        class="flex justify-center w-6 h-6 text-zinc-400 hover:text-zinc-800 text-sm"
+                    >
+                        ❮❮
+                    </button>
+                    <!-- 툴팁 -->
+                    <div
+                        class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                    >
+                        사이드바 닫기
+                    </div>
+                </div>
+                <div class="relative group">
+                    <button
+                        type="button"
+                        class="flex justify-center items-center w-6 h-6 rounded text-xs"
+                        @click="newChat"
+                    >
+                        <Icon
+                            size="24px"
+                            name="mynaui:edit-one"
+                            class="text-zinc-400 hover:text-zinc-800"
+                        />
+                    </button>
+                    <div
+                        class="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                    >
+                        새로운 채팅
+                    </div>
+                </div>
             </div>
             <div
                 class="chat-list-header m-1 pl-2 font-bold text-xs border-zinc-100"
@@ -67,15 +86,21 @@
 
         <!-- 우측: 채팅 영역 -->
         <div class="chat-window flex-1 flex flex-col relative text-wrap">
-            <div>
+            <div class="absolute left-0 top-2 flex flex-col items-center group">
                 <!-- 사이드바가 닫혔을 때 "열기" 버튼 -->
                 <button
                     v-if="!isSidebarOpen"
                     @click="toggleSidebar"
-                    class="absolute left-0 top-3 w-11 h-11 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-r-lg shadow-md flex justify-center items-center"
+                    class="w-10 h-10 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-r-lg shadow-md flex justify-center items-center relative"
                 >
                     ☰
                 </button>
+                <!-- 툴팁 (마우스 올리면 나타남) -->
+                <div
+                    class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                >
+                    사이드바 열기
+                </div>
             </div>
             <div
                 v-if="activeChat"
