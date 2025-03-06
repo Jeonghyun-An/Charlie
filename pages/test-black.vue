@@ -115,7 +115,7 @@
                     <div
                         v-for="chat in activeChat.chats"
                         :key="chat._id"
-                        class="relative inline-flex p-1 mt-5 rounded-3xl break-words flex-wrap text-zinc-900"
+                        class="relative flex-col p-1 mt-5 rounded-3xl break-words flex-wrap text-zinc-900"
                         :class="
                             chat.sender === 'user'
                                 ? 'ml-auto max-w-[70%] text-left  mt-10 p-4 bg-[#f3f3f3] shadow-xs'
@@ -159,28 +159,65 @@
                                 </svg>
                             </button>
                         </div>
-                        <div
-                            v-if="chat.sender === 'bot'"
-                            class="absolute bottom-[-20px] left-[+5px]"
-                        >
-                            <button
-                                class="text-xs text-zinc-500 cursor-pointer"
-                                @click="toggledocs(chat)"
-                            >
+                        <div class="flex flex-col items-start mt-2">
+                            <div v-if="chat.sender === 'bot'">
+                                <button
+                                    class="text-xs text-zinc-500 cursor-pointer"
+                                    @click="toggledocs(chat)"
                                 >
-                            </button>
+                                    문서 보기
+                                </button>
+                            </div>
                             <div
-                                v-if="chat.showDocs"
-                                class="mt-1 text-xs text-zinc-400"
+                                v-show="chat.showDocs"
+                                class="mt-2 p-3 w-full bg-gray-100 rounded-lg shadow"
                             >
-                                <ul class="ml-5 p-0">
-                                    <li
-                                        v-for="(doc, index) in chat.docs"
-                                        :key="index"
-                                    >
-                                        {{ doc }}
-                                    </li>
-                                </ul>
+                                <table class="w-full border-collapse text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="p-2 text-center">
+                                                파일명
+                                            </th>
+                                            <th class="p-2 text-center">
+                                                기능
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr
+                                            v-for="(
+                                                doc, index
+                                            ) in chat.docs.slice(0, 3)"
+                                            :key="index"
+                                            class="border-b"
+                                        >
+                                            <td class="p-2">{{ doc.name }}</td>
+                                            <td
+                                                class="p-2 flex justify-center gap-2"
+                                            >
+                                                <button
+                                                    class="text-xs px-2 py-1 text-white rounded hover:bg-blue-600"
+                                                    @click="viewInfo(doc)"
+                                                >
+                                                    ℹ️
+                                                </button>
+                                                <button
+                                                    class="text-xs px-2 py-1 bg-black text-white rounded hover:bg-gray-500"
+                                                    @click="openViewer(doc)"
+                                                >
+                                                    뷰어 보기
+                                                </button>
+                                                <a
+                                                    :href="doc.downloadUrl"
+                                                    download
+                                                    class="text-xs px-2 py-1 bg-black text-white rounded hover:bg-gray-400"
+                                                >
+                                                    ⬇다운로드
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -532,6 +569,18 @@ function replayMessage(chat) {
 }
 function toggledocs(chat) {
     chat.showDocs = !chat.showDocs;
+}
+
+// 정보 보기 기능 (모달 등 활용 가능)
+function viewInfo(doc) {
+    alert(
+        `파일명: ${doc.name}\n파일 크기: ${doc.size}KB\n업로드 날짜: ${doc.date}`
+    );
+}
+
+// PDF 뷰어 열기 기능 (새 창에서 열기)
+function openViewer(doc) {
+    window.open(doc.viewerUrl, "_blank");
 }
 function handleMenuMouseLeave() {
     activeMenuId.value = null;
