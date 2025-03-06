@@ -5,10 +5,12 @@
             v-if="isSidebarOpen"
             class="w-[230px] p-1 flex flex-col bg-zinc-50 relative transition-all duration-300 shadow-md"
         >
-            <div class="flex justify-between items-center px-3 py-3 border-b">
+            <div
+                class="flex justify-between items-center px-3 py-3 border-b border-double"
+            >
                 <button
                     @click="toggleSidebar"
-                    class="flex text-zinc-600 hover:text-zinc-900 text-sm"
+                    class="flex w-6 h-6 text-zinc-500 hover:text-zinc-900 text-sm"
                 >
                     ❮❮
                 </button>
@@ -21,7 +23,7 @@
                 </button>
             </div>
             <div
-                class="chat-list-header m-1 pl-2 border-y font-bold text-xs border-zinc-100"
+                class="chat-list-header m-1 pl-2 font-bold text-xs border-zinc-100"
             >
                 채팅 목록
             </div>
@@ -70,7 +72,7 @@
                 <button
                     v-if="!isSidebarOpen"
                     @click="toggleSidebar"
-                    class="absolute left-0 top-7 w-[40px] h-10 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-r-lg shadow-md flex justify-center items-center"
+                    class="absolute left-0 top-3 w-11 h-11 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-r-lg shadow-md flex justify-center items-center"
                 >
                     ☰
                 </button>
