@@ -35,7 +35,7 @@
                                 v-model="editableRoomName"
                                 @blur="submitRoomNameEdit(room)"
                                 :style="titleInputStyle"
-                                class="w-full p-1 border rounded"
+                                class="w-full p-1 border rounded focus:outline-none"
                                 autofocus
                             />
                         </template>
@@ -414,7 +414,7 @@ async function startChat() {
                 creationTime,
             });
             if (res.data.success) {
-                chatRecords.value.push(res.data.data);
+                chatRecords.value.unshift(res.data.data);
                 activeChat.value = res.data.data;
             }
         } catch (err) {
