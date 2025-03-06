@@ -1,11 +1,20 @@
 <template>
     <div class="flex h-screen">
         <!-- 좌측: 채팅 기록 목록 -->
-        <div class="w-[230px] p-1 flex flex-col bg-zinc-50 relative">
-            <div>
+        <div
+            v-if="isSidebarOpen"
+            class="w-[230px] p-1 flex flex-col bg-zinc-50 relative transition-all duration-300 shadow-md"
+        >
+            <div class="flex justify-between items-center px-3 py-3 border-b">
+                <button
+                    @click="toggleSidebar"
+                    class="flex text-zinc-600 hover:text-zinc-900 text-sm"
+                >
+                    ❮❮
+                </button>
                 <button
                     type="button"
-                    class="flex justify-center items-center w-4/5 h-12 mx-auto m-[10%] bg-zinc-950 text-white rounded shadow-md hover:bg-zinc-700"
+                    class="flex justify-center items-center w-1/3 h-8 bg-zinc-950 text-white rounded shadow-md hover:bg-zinc-700 text-xs"
                     @click="newChat"
                 >
                     NEW CHAT
@@ -17,7 +26,7 @@
                 채팅 목록
             </div>
             <div
-                class="chat-records flex-1 overflow-y-auto pl-1 text-sm"
+                class="flex-1 overflow-y-auto text-sm"
                 style="scrollbar-gutter: stable"
             >
                 <div
@@ -56,6 +65,16 @@
 
         <!-- 우측: 채팅 영역 -->
         <div class="chat-window flex-1 flex flex-col relative text-wrap">
+            <div>
+                <!-- 사이드바가 닫혔을 때 "열기" 버튼 -->
+                <button
+                    v-if="!isSidebarOpen"
+                    @click="toggleSidebar"
+                    class="absolute left-0 top-7 w-[40px] h-10 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-r-lg shadow-md flex justify-center items-center"
+                >
+                    ☰
+                </button>
+            </div>
             <div
                 v-if="activeChat"
                 class="chat-title text-center mb-2 text-sm text-zinc-300"
@@ -267,6 +286,7 @@ const activeChat = ref(null);
 const newMessage = ref("");
 const activeMenuId = ref(null);
 const menuStyle = reactive({ top: "0px", left: "0px" });
+const isSidebarOpen = ref(true); // 사이드바 상태 추가
 
 const chatMessagesRef = ref(null);
 const teleportMenuRef = ref(null);
@@ -276,6 +296,9 @@ const MAX_HEIGHT = 200;
 //     styleProp: "minHeight",
 //     maxRows: 4,
 // });
+function toggleSidebar() {
+    isSidebarOpen.value = !isSidebarOpen.value;
+}
 function updateHeight() {
     const el = textareaRef.value;
     if (!el) return;
@@ -497,6 +520,7 @@ onMounted(fetchChatrooms);
 
 <style scoped lang="scss">
 .record-title {
+    padding-left: 3px;
     flex: 1;
     margin-right: 8px;
     white-space: nowrap;
