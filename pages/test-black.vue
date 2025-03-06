@@ -1,7 +1,7 @@
 <template>
     <div class="flex h-screen">
         <!-- 좌측: 채팅 기록 목록 -->
-        <div class="w-[250px] p-1 flex flex-col bg-zinc-50 relative">
+        <div class="w-[230px] p-1 flex flex-col bg-zinc-50 relative">
             <div>
                 <button
                     type="button"
@@ -12,11 +12,14 @@
                 </button>
             </div>
             <div
-                class="chat-list-header m-1 font-bold text-xs border-y border-zinc-100"
+                class="chat-list-header m-1 pl-2 border-y font-bold text-xs border-zinc-100"
             >
                 채팅 목록
             </div>
-            <div class="chat-records flex-1 overflow-y-auto text-sm">
+            <div
+                class="chat-records flex-1 overflow-y-auto pl-1 text-sm"
+                style="scrollbar-gutter: stable"
+            >
                 <div
                     v-for="room in chatRecords"
                     :key="room._id"
@@ -26,6 +29,16 @@
                     <div
                         class="record-title flex-1 mr-2 whitespace-nowrap overflow-hidden"
                     >
+                        <!-- 수정 모드인 경우 input 필드, 그렇지 않으면 제목 텍스트 -->
+                        <template v-if="editingRoomId === room._id">
+                            <input
+                                v-model="editableRoomName"
+                                @blur="submitRoomNameEdit(room)"
+                                :style="titleInputStyle"
+                                class="w-full p-1 border rounded"
+                                autofocus
+                            />
+                        </template>
                         {{ room.title }}
                     </div>
                     <button
@@ -210,13 +223,15 @@
                 class="absolute bg-white border border-gray-300 p-1 rounded shadow z-50 flex flex-col gap-1"
             >
                 <button
-                    @click.stop="renameRecord(getRecordById(activeMenuId))"
+                    @click.stop="enableRoomEditing(getRecordById(activeMenuId))"
                     class="text-xs"
                 >
                     이름 바꾸기
                 </button>
                 <button
-                    @click.stop="deleteRecord(getRecordById(activeMenuId))"
+                    @click.stop="
+                        confirmRoomDeletion(getRecordById(activeMenuId))
+                    "
                     class="text-xs text-red-800"
                 >
                     삭제
@@ -279,7 +294,6 @@ watch(newMessage, () => {
 async function handleKeydown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        // activeChat이 없으면 startChat()을 기다린 후 sendMessage() 실행
         if (!activeChat.value) {
             await startChat();
         } else {
@@ -304,13 +318,58 @@ function toggleMenu(id, event) {
     menuStyle.top = rect.top - 20 + "px";
     menuStyle.left = rect.right + 8 + "px";
 }
-function renameRecord(record) {
-    alert(`이름 바꾸기: ${record.title}`);
+// 채팅방 이름 수정 관련
+const editingRoomId = ref(null);
+const editableRoomName = ref("");
+const titleInputStyle = computed(() => {
+    return { width: "180px" };
+});
+
+function enableRoomEditing(room) {
+    editingRoomId.value = room._id;
+    editableRoomName.value = room.title;
     activeMenuId.value = null;
+    nextTick(() => {
+        // input에 포커스 처리
+        const el = document.querySelector("input[ref='editableRoom']");
+        if (el) el.focus();
+    });
 }
-function deleteRecord(record) {
-    alert(`삭제: ${record.title}`);
+
+async function submitRoomNameEdit(room) {
+    try {
+        const updatedTitle = editableRoomName.value;
+        const res = await axios.put(`${API_URL}/chatrooms/${room._id}`, {
+            title: updatedTitle,
+        });
+        if (res.data.success) {
+            await fetchChatrooms();
+            if (activeChat.value && activeChat.value._id === room._id) {
+                await fetchChatroom(room._id);
+            }
+        }
+    } catch (err) {
+        console.error("채팅방 이름 수정 실패:", err);
+    } finally {
+        editingRoomId.value = null;
+    }
+}
+
+async function confirmRoomDeletion(room) {
     activeMenuId.value = null;
+    if (confirm(`정말 ${room.title} 채팅방을 삭제하시겠습니까?`)) {
+        try {
+            const res = await axios.delete(`${API_URL}/chatrooms/${room._id}`);
+            if (res.data.success) {
+                await fetchChatrooms();
+                if (activeChat.value && activeChat.value._id === room._id) {
+                    activeChat.value = null;
+                }
+            }
+        } catch (err) {
+            console.error("채팅방 삭제 실패:", err);
+        }
+    }
 }
 
 //채팅방 목록 불러오기
@@ -341,8 +400,13 @@ async function startChat() {
     if (!activeChat.value) {
         try {
             const creationTime = new Date();
-            const title = creationTime.toLocaleTimeString();
-            const res = await axios.post(`${API_URL}/chatrooms`, { title });
+            // const title = creationTime.toLocaleTimeString();
+            if (!newMessage.value.trim()) return; // 빈 메시지 방지
+            const title = newMessage.value.substring(0, 15);
+            const res = await axios.post(`${API_URL}/chatrooms`, {
+                title,
+                creationTime,
+            });
             if (res.data.success) {
                 chatRecords.value.push(res.data.data);
                 activeChat.value = res.data.data;

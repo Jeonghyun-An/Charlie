@@ -89,6 +89,41 @@ app.post("/api/chatrooms/:id/chats", async (req, res) => {
     }
 });
 
+// 채팅방 제목 수정 (업데이트)
+app.put("/api/chatrooms/:id", async (req, res) => {
+    try {
+        const { title } = req.body;
+        const room = await Chatroom.findByIdAndUpdate(
+            req.params.id,
+            { title },
+            { new: true }
+        );
+        if (!room) {
+            return res
+                .status(404)
+                .json({ success: false, error: "채팅방을 찾을 수 없습니다." });
+        }
+        res.json({ success: true, data: room });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// 채팅방 삭제
+app.delete("/api/chatrooms/:id", async (req, res) => {
+    try {
+        const room = await Chatroom.findByIdAndDelete(req.params.id);
+        if (!room) {
+            return res
+                .status(404)
+                .json({ success: false, error: "채팅방을 찾을 수 없습니다." });
+        }
+        res.json({ success: true, data: room });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
 // 서버 시작
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
