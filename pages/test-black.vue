@@ -24,6 +24,7 @@
                     v-for="room in chatRecords"
                     :key="room._id"
                     class="chat-record p-1.5 flex justify-between items-center cursor-pointer relative group m-1 hover:bg-[#e3e3e3] hover:shadow rounded-xl"
+                    :class="{ 'bg-transparent': editingRoomId === room._id }"
                     @click="selectChatroom(room)"
                 >
                     <div
@@ -35,11 +36,13 @@
                                 v-model="editableRoomName"
                                 @blur="submitRoomNameEdit(room)"
                                 :style="titleInputStyle"
-                                class="w-full p-1 border rounded focus:outline-none"
+                                class="w-full p-1 border rounded focus:outline-none focus:ring focus:border-pink-400"
                                 autofocus
                             />
                         </template>
-                        {{ room.title }}
+                        <template v-else>
+                            {{ room.title }}
+                        </template>
                     </div>
                     <button
                         class="menu-toggle invisible group-hover:visible text-zinc-400 text-lg"
@@ -511,7 +514,22 @@ onMounted(fetchChatrooms);
         transparent 100%
     );
 }
+.chat-record {
+    transition: background 0.3s ease-in-out;
+}
+.chat-record.bg-transparent {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 1),
+        rgba(255, 255, 255, 0.7)
+    );
+}
 
+.record-title input {
+    position: relative;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+}
 /* 액션 버튼 자체 스타일  */
 .replay-btn {
     width: 25px;
