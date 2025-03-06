@@ -60,7 +60,6 @@
                     <div
                         class="record-title flex-1 mr-2 whitespace-nowrap overflow-hidden"
                     >
-                        <!-- 수정 모드인 경우 input 필드, 그렇지 않으면 제목 텍스트 -->
                         <template v-if="editingRoomId === room._id">
                             <input
                                 v-model="editableRoomName"
@@ -87,7 +86,6 @@
         <!-- 우측: 채팅 영역 -->
         <div class="chat-window flex-1 flex flex-col relative text-wrap">
             <div class="absolute left-0 top-2 flex flex-col items-center group">
-                <!-- 사이드바가 닫혔을 때 "열기" 버튼 -->
                 <button
                     v-if="!isSidebarOpen"
                     @click="toggleSidebar"
@@ -95,7 +93,7 @@
                 >
                     ☰
                 </button>
-                <!-- 툴팁 (마우스 올리면 나타남) -->
+                <!-- 툴팁 -->
                 <div
                     class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
                 >
@@ -600,5 +598,28 @@ onMounted(fetchChatrooms);
             display: none;
         }
     }
+}
+
+/* 스크롤바*/
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d1d1;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
 }
 </style>
