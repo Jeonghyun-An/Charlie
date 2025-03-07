@@ -15,7 +15,6 @@
                     >
                         ❮❮
                     </button>
-                    <!-- 툴팁 -->
                     <div
                         class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
                     >
@@ -82,9 +81,10 @@
                 </div>
             </div>
         </div>
-
         <!-- 우측: 채팅 영역 -->
-        <div class="chat-window flex-1 flex flex-col relative text-wrap">
+        <div
+            class="chat-window flex-1 flex flex-col relative text-wrap overflow-hidden"
+        >
             <div class="absolute left-0 top-2 flex flex-col items-center group">
                 <button
                     v-if="!isSidebarOpen"
@@ -93,7 +93,6 @@
                 >
                     ☰
                 </button>
-                <!-- 툴팁 -->
                 <div
                     class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
                 >
@@ -102,9 +101,14 @@
             </div>
             <div
                 v-if="activeChat"
-                class="chat-title text-center mb-2 text-sm text-zinc-300"
+                class="chat-title flex flex-col items-center text-center text-sm text-zinc-400"
             >
-                {{ activeChat ? activeChat.title : "채팅을 시작하세요" }}
+                <span class="font-semibold">{{
+                    activeChat ? activeChat.title : "채팅을 시작하세요"
+                }}</span>
+                <span class="text-xs font-light text-zinc-300">{{
+                    formattedDate
+                }}</span>
             </div>
             <div
                 class="flex-1 flex flex-col gap-2 overflow-y-auto px-[20%] m-1 break-words break-keep"
@@ -115,7 +119,7 @@
                     <div
                         v-for="chat in activeChat.chats"
                         :key="chat._id"
-                        class="relative flex-col p-1 mt-5 rounded-3xl break-words flex-wrap text-zinc-900"
+                        class="relative flex flex-col p-1 mt-5 rounded-3xl text-zinc-900 break-words whitespace-pre-wrap"
                         :class="
                             chat.sender === 'user'
                                 ? 'ml-auto max-w-[70%] text-left  mt-10 p-4 bg-[#f3f3f3] shadow-xs'
@@ -123,7 +127,7 @@
                         "
                     >
                         <div
-                            class="flex-1 whitespace-pre-wrap break-words overflow-auto"
+                            class="flex-1 break-words whitespace-pre-wrap overflow-auto"
                         >
                             {{ chat.text }}
                         </div>
@@ -159,7 +163,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="flex flex-col items-start mt-2">
+                        <div class="flex flex-col items-start">
                             <div v-if="chat.sender === 'bot'">
                                 <button
                                     class="text-xs text-zinc-500 cursor-pointer"
@@ -172,7 +176,7 @@
                                 v-show="chat.showDocs"
                                 class="mt-2 p-3 w-full bg-gray-100 rounded-lg shadow"
                             >
-                                <table class="w-full border-collapse text-sm">
+                                <table class="w-full border-collapse text-xs">
                                     <thead>
                                         <tr class="bg-gray-200">
                                             <th class="p-2 text-center">
@@ -193,16 +197,16 @@
                                         >
                                             <td class="p-2">{{ doc.name }}</td>
                                             <td
-                                                class="p-2 flex justify-center gap-2"
+                                                class="p-2 flex justify-end gap-2"
                                             >
                                                 <button
-                                                    class="text-xs px-2 py-1 text-white rounded hover:bg-blue-600"
+                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
                                                     @click="viewInfo(doc)"
                                                 >
-                                                    ℹ️
+                                                    i
                                                 </button>
                                                 <button
-                                                    class="text-xs px-2 py-1 bg-black text-white rounded hover:bg-gray-500"
+                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
                                                     @click="openViewer(doc)"
                                                 >
                                                     뷰어 보기
@@ -210,7 +214,7 @@
                                                 <a
                                                     :href="doc.downloadUrl"
                                                     download
-                                                    class="text-xs px-2 py-1 bg-black text-white rounded hover:bg-gray-400"
+                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
                                                 >
                                                     ⬇다운로드
                                                 </a>
@@ -222,7 +226,6 @@
                         </div>
                     </div>
                 </template>
-
                 <div
                     v-else
                     class="flex flex-col justify-center items-center h-full"
@@ -343,6 +346,21 @@ const clickOutside = {
 };
 defineExpose({ directives: { "click-outside": clickOutside } });
 
+const formattedDate = computed(() => {
+    if (!activeChat.value || !activeChat.value.createdAt) return "";
+
+    const date = new Date(activeChat.value.createdAt);
+
+    return date.toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    });
+});
+
 const chatRecords = ref([]);
 const activeChat = ref(null);
 const newMessage = ref("");
@@ -418,7 +436,6 @@ function enableRoomEditing(room) {
     editableRoomName.value = room.title;
     activeMenuId.value = null;
     nextTick(() => {
-        // input에 포커스 처리
         const el = document.querySelector("input[ref='editableRoom']");
         if (el) el.focus();
     });
@@ -460,7 +477,6 @@ async function confirmRoomDeletion(room) {
     }
 }
 
-//채팅방 목록 불러오기
 async function fetchChatrooms() {
     try {
         const res = await axios.get(`${API_URL}/chatrooms`);
@@ -489,7 +505,6 @@ async function fetchChatroom(id) {
     }
 }
 
-// 채팅 시작 및 전송: activeChat이 없으면 채팅방 생성 후 메시지 전송
 async function startChat() {
     if (!activeChat.value) {
         try {
@@ -649,7 +664,6 @@ onMounted(fetchChatrooms);
     }
 }
 
-/* 스크롤바*/
 ::-webkit-scrollbar {
     width: 6px;
 }
