@@ -16,7 +16,7 @@
                         ❮❮
                     </button>
                     <div
-                        class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                        class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap transition-opacity group-hover:opacity-100 pointer-events-none"
                     >
                         사이드바 닫기
                     </div>
@@ -34,7 +34,7 @@
                         />
                     </button>
                     <div
-                        class="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                        class="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity pointer-events-none"
                     >
                         새로운 채팅
                     </div>
@@ -94,7 +94,7 @@
                     ☰
                 </button>
                 <div
-                    class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                    class="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity pointer-events-none"
                 >
                     사이드바 열기
                 </div>
