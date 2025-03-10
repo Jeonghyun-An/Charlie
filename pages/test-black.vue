@@ -336,12 +336,61 @@
             </div>
         </teleport>
     </div>
+    <!-- PDF 뷰어 모달 -->
+    <div
+        v-if="pdfViewer.isOpen"
+        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+    >
+        <div
+            class="bg-white rounded-lg p-4 shadow-lg max-w-4xl w-full relative"
+        >
+            <button
+                @click="closePdfViewer"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+            >
+                ✖
+            </button>
+            <h2 class="text-lg font-semibold mb-2 text-center">
+                {{ pdfViewer.title }}
+            </h2>
+            <div class="pdf-container overflow-y-auto max-h-[80vh] p-2">
+                <canvas ref="pdfCanvas"></canvas>
+            </div>
+            <div class="flex justify-between items-center mt-3 ml-48">
+                <button
+                    @click="prevPage"
+                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded"
+                >
+                    ◀ 이전
+                </button>
+                <span
+                    >{{ pdfViewer.currentPage }} /
+                    {{ pdfViewer.totalPages }}</span
+                >
+                <button
+                    @click="nextPage"
+                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded"
+                >
+                    다음 ▶
+                </button>
+                <button
+                    @click="downloadPdf"
+                    class="px-3 py-1 bg-zinc-500 text-white rounded hover:bg-zinc-800"
+                >
+                    ⬇ 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, watch } from "vue";
+import { ref, reactive, nextTick, watch, onMounted } from "vue";
 import { onClickOutside } from "@vueuse/core";
 import axios from "axios";
+import * as pdfjsLib from "pdfjs-dist/build/pdf";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 //mongoDB
 const API_URL = "http://localhost:3001/api";
@@ -634,10 +683,84 @@ function viewInfo(doc) {
     );
 }
 
-// PDF 뷰어 열기 기능 (새 창에서 열기)
-function openViewer(doc) {
-    window.open(doc.viewerUrl, "_blank");
+const pdfViewer = ref({
+    isOpen: false,
+    title: "",
+    url: "",
+    currentPage: 1,
+    totalPages: 1,
+});
+
+const pdfCanvas = ref(null);
+let pdfDoc = null;
+
+async function openViewer(doc) {
+    pdfViewer.value.isOpen = true;
+    pdfViewer.value.title = doc.name;
+    pdfViewer.value.url = doc.path;
+    pdfViewer.value.currentPage = 1;
+
+    await loadPdf();
 }
+
+async function loadPdf() {
+    if (!pdfViewer.value.url) return;
+    const loadingTask = pdfjsLib.getDocument(pdfViewer.value.url);
+    pdfDoc = await loadingTask.promise;
+    pdfViewer.value.totalPages = pdfDoc.numPages;
+    renderPage(pdfViewer.value.currentPage);
+}
+
+async function renderPage(pageNumber) {
+    if (!pdfDoc) return;
+    const page = await pdfDoc.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 1.3 });
+
+    const canvas = pdfCanvas.value;
+    const context = canvas.getContext("2d");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const renderContext = { canvasContext: context, viewport };
+    await page.render(renderContext).promise;
+}
+
+function nextPage() {
+    if (pdfViewer.value.currentPage < pdfViewer.value.totalPages) {
+        pdfViewer.value.currentPage++;
+        renderPage(pdfViewer.value.currentPage);
+    }
+}
+
+function prevPage() {
+    if (pdfViewer.value.currentPage > 1) {
+        pdfViewer.value.currentPage--;
+        renderPage(pdfViewer.value.currentPage);
+    }
+}
+
+function downloadPdf() {
+    const link = document.createElement("a");
+    link.href = pdfViewer.value.url;
+    link.download = pdfViewer.value.title;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function closePdfViewer() {
+    pdfViewer.value.isOpen = false;
+    pdfDoc = null;
+}
+
+onMounted(() => {
+    window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && pdfViewer.value.isOpen) {
+            closePdfViewer();
+        }
+    });
+});
+
 function handleMenuMouseLeave() {
     activeMenuId.value = null;
 }
