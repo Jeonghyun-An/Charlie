@@ -24,7 +24,7 @@ const MessageSchema = new mongoose.Schema({
     text: String,
     sender: { type: String, enum: ["user", "bot"] },
     createdAt: { type: Date, default: Date.now },
-    docs: [String],
+    docs: [{ name: String, path: String, size: String }],
 });
 
 // 채팅방 스키마
@@ -79,8 +79,9 @@ app.post("/api/chatrooms/:id/chats", async (req, res) => {
             return res
                 .status(404)
                 .json({ success: false, error: "채팅방을 찾을 수 없습니다." });
-
-        const message = { text, sender, docs: docs || [] };
+        const validDocs =
+            Array.isArray(docs) && docs.every((doc) => typeof doc === "object");
+        const message = { text, sender, docs: validDocs ? docs : [] };
         room.chats.push(message);
         await room.save();
         res.status(201).json({ success: true, data: message });

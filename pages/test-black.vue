@@ -169,7 +169,7 @@
                                     class="text-xs text-zinc-500 cursor-pointer"
                                     @click="toggledocs(chat)"
                                 >
-                                    문서 보기
+                                    >
                                 </button>
                             </div>
                             <div
@@ -182,9 +182,7 @@
                                             <th class="p-2 text-center">
                                                 파일명
                                             </th>
-                                            <th class="p-2 text-center">
-                                                기능
-                                            </th>
+                                            <th class="p-2 text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -197,26 +195,38 @@
                                         >
                                             <td class="p-2">{{ doc.name }}</td>
                                             <td
-                                                class="p-2 flex justify-end gap-2"
+                                                class="p-2 flex items-center justify-center"
                                             >
                                                 <button
-                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                                                    class="px-1 py-1 text-xs"
                                                     @click="viewInfo(doc)"
                                                 >
-                                                    i
+                                                    <Icon
+                                                        size="24px"
+                                                        name="mdi-light:information"
+                                                        class="text-zinc-400 hover:text-zinc-800"
+                                                    />
                                                 </button>
                                                 <button
-                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                                                    class="px-1 py-1 text-xs"
                                                     @click="openViewer(doc)"
                                                 >
-                                                    뷰어 보기
+                                                    <Icon
+                                                        size="24px"
+                                                        name="material-symbols-light:document-search-outline-rounded"
+                                                        class="text-zinc-400 hover:text-zinc-800"
+                                                    />
                                                 </button>
                                                 <a
                                                     :href="doc.downloadUrl"
                                                     download
-                                                    class="text-xs px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                                                    class="px-1 py-1 text-xs"
                                                 >
-                                                    ⬇다운로드
+                                                    <Icon
+                                                        size="24px"
+                                                        name="material-symbols-light:download-rounded"
+                                                        class="text-zinc-400 hover:text-zinc-800"
+                                                    />
                                                 </a>
                                             </td>
                                         </tr>
@@ -548,13 +558,44 @@ async function sendMessage() {
                 }
                 updateHeight();
             });
+            const dummyData = [
+                {
+                    answer: "KB라이프 무배당 소액암진단특약 입니다.",
+                    doc: {
+                        name: "KB라이프 무배당 소액암진단특약W(갱신형) 약관.pdf",
+                        path: "/document/KB라이프 무배당 소액암진단특약W(갱신형) 약관.pdf",
+                        size: "823KB",
+                    },
+                },
+                {
+                    answer: "KB생활비지급 암보험입니다.",
+
+                    doc: {
+                        name: "무배당 KB 생활비지급 암보험 갱신형.pdf",
+                        path: "/document/무배당 KB 생활비지급 암보험 갱신형.pdf",
+                        size: "505KB",
+                    },
+                },
+                {
+                    answer: "한화생명 간편가입 e시그니처암보험 무배당입니다.",
+                    doc: {
+                        name: "한화생명 간편가입 e시그니처암보험 무배당_2133-A01_상품요약서_20240101~          _1.pdf",
+                        path: "/document/한화생명 간편가입 e시그니처암보험 무배당_2133-A01_상품요약서_20240101~          _1.pdf",
+                        size: "734KB",
+                    },
+                },
+            ];
+            // 🔥 랜덤한 인덱스를 선택하여 하나의 답변만 전송
+            const randomIndex = Math.floor(Math.random() * dummyData.length);
+            const selectedData = dummyData[randomIndex]; // 문서도 매칭해서 하나만 포함
+
             // 예시: 500ms 후 더미 봇 메시지 전송
             setTimeout(async () => {
                 try {
                     const botPayload = {
-                        text: "더미 메시지 " + userText,
+                        text: selectedData.answer + "\n " + userText,
                         sender: "bot",
-                        docs: ["참고 문서 1"],
+                        docs: [selectedData.doc],
                     };
                     const botRes = await axios.post(
                         `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
