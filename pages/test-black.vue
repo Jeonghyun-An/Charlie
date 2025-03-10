@@ -676,10 +676,9 @@ function toggledocs(chat) {
     chat.showDocs = !chat.showDocs;
 }
 
-// 정보 보기 기능 (모달 등 활용 가능)
 function viewInfo(doc) {
     alert(
-        `파일명: ${doc.name}\n파일 크기: ${doc.size}KB\n업로드 날짜: ${doc.date}`
+        `파일명: ${doc.name}\n파일 크기: ${doc.size}KB\n파일 경로: ${doc.path}`
     );
 }
 
