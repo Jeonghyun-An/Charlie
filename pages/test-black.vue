@@ -360,7 +360,7 @@
             >
                 <button
                     @click="prevPage"
-                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded"
+                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded-lg"
                 >
                     ◀ 이전
                 </button>
@@ -370,13 +370,13 @@
                 >
                 <button
                     @click="nextPage"
-                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded"
+                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded-lg"
                 >
                     다음 ▶
                 </button>
                 <button
                     @click="downloadPdf()"
-                    class="px-3 py-1 bg-zinc-500 text-white rounded hover:bg-zinc-800"
+                    class="px-3 py-1 bg-zinc-500 text-white rounded-md hover:bg-zinc-800"
                 >
                     ⬇ 다운로드
                 </button>
