@@ -174,11 +174,11 @@
                             </div>
                             <div
                                 v-show="chat.showDocs"
-                                class="mt-2 p-3 w-full bg-gray-100 rounded-lg shadow"
+                                class="mt-2 p-3 w-full bg-[#f9f9f9] rounded-lg shadow"
                             >
                                 <table class="w-full border-collapse text-xs">
                                     <thead>
-                                        <tr class="bg-gray-200">
+                                        <tr class="bg-[#ececec]">
                                             <th class="p-2 text-center">
                                                 파일명
                                             </th>
@@ -217,17 +217,16 @@
                                                         class="text-zinc-400 hover:text-zinc-800"
                                                     />
                                                 </button>
-                                                <a
-                                                    :href="doc.downloadUrl"
-                                                    download
+                                                <button
                                                     class="px-1 py-1 text-xs"
+                                                    @click="downloadPdf(doc)"
                                                 >
                                                     <Icon
                                                         size="24px"
                                                         name="material-symbols-light:download-rounded"
                                                         class="text-zinc-400 hover:text-zinc-800"
                                                     />
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -350,13 +349,15 @@
             >
                 ✖
             </button>
-            <h2 class="text-lg font-semibold mb-2 text-center">
+            <h2 class="font-semibold mb-2 text-center">
                 {{ pdfViewer.title }}
             </h2>
             <div class="pdf-container overflow-y-auto max-h-[80vh] p-2">
                 <canvas ref="pdfCanvas"></canvas>
             </div>
-            <div class="flex justify-between items-center mt-3 ml-48">
+            <div
+                class="flex justify-between items-center mt-3 ml-56 text-sm p-1"
+            >
                 <button
                     @click="prevPage"
                     class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded"
@@ -374,7 +375,7 @@
                     다음 ▶
                 </button>
                 <button
-                    @click="downloadPdf"
+                    @click="downloadPdf()"
                     class="px-3 py-1 bg-zinc-500 text-white rounded hover:bg-zinc-800"
                 >
                     ⬇ 다운로드
@@ -634,7 +635,6 @@ async function sendMessage() {
                     },
                 },
             ];
-            // 🔥 랜덤한 인덱스를 선택하여 하나의 답변만 전송
             const randomIndex = Math.floor(Math.random() * dummyData.length);
             const selectedData = dummyData[randomIndex]; // 문서도 매칭해서 하나만 포함
 
@@ -693,13 +693,15 @@ const pdfViewer = ref({
 
 const pdfCanvas = ref(null);
 let pdfDoc = null;
-
 async function openViewer(doc) {
+    if (!doc || !doc.path) {
+        alert("⚠️ 문서 경로가 없습니다.");
+        return;
+    }
     pdfViewer.value.isOpen = true;
     pdfViewer.value.title = doc.name;
     pdfViewer.value.url = doc.path;
     pdfViewer.value.currentPage = 1;
-
     await loadPdf();
 }
 
@@ -739,10 +741,21 @@ function prevPage() {
     }
 }
 
-function downloadPdf() {
+function downloadPdf(doc = null) {
+    let filePath, fileName;
+    if (!doc && pdfViewer.value.isOpen) {
+        filePath = pdfViewer.value.url;
+        fileName = pdfViewer.value.title;
+    } else if (doc?.path) {
+        filePath = doc.path;
+        fileName = doc.name || "다운로드.pdf";
+    } else {
+        alert("⚠️ 파일을 다운로드할 수 없습니다. 다시 시도해주세요.");
+        return;
+    }
     const link = document.createElement("a");
-    link.href = pdfViewer.value.url;
-    link.download = pdfViewer.value.title;
+    link.href = filePath;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
