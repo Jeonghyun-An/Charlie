@@ -242,7 +242,42 @@
                     <div class="text-3xl font-semibold pb-2 text-zinc-800">
                         무엇을 도와드릴까요?
                     </div>
+
                     <div class="p-3 w-full m-5 border rounded-3xl shadow-lg">
+                        <!-- 업로드된 파일 목록 UI -->
+                        <div
+                            v-if="uploadedFiles.length"
+                            class="mt-2 bg-zinc-100 p-2 rounded-md shadow"
+                        >
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-semibold"
+                                    >📑 업로드된 문서 ({{
+                                        uploadedFiles.length
+                                    }}개)</span
+                                >
+                                <button
+                                    @click="clearUploadedFiles"
+                                    class="text-xs text-red-500 hover:text-red-700"
+                                >
+                                    ✖ 모두 삭제
+                                </button>
+                            </div>
+                            <ul>
+                                <li
+                                    v-for="(file, index) in uploadedFiles"
+                                    :key="index"
+                                    class="flex justify-between p-1 border-b"
+                                >
+                                    {{ file.name }} ({{ file.size }}KB)
+                                    <button
+                                        @click="removeFile(index)"
+                                        class="text-red-500 hover:text-red-700"
+                                    >
+                                        ❌
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                         <textarea
                             ref="textareaRef"
                             v-model="newMessage"
@@ -252,10 +287,11 @@
                             autofocus
                             class="w-full px-2 py-2 resize-none outline-none"
                         ></textarea>
+
                         <div class="flex justify-between items-center py-1">
                             <button
-                                class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
-                                @click="toggledocs(message)"
+                                class="relative px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
+                                @click="triggerFileUpload"
                             >
                                 <Icon
                                     size="24px"
@@ -263,6 +299,15 @@
                                     class="text-zinc-400 hover:text-zinc-800"
                                 />
                             </button>
+
+                            <!-- 숨겨진 파일 업로드 input -->
+                            <input
+                                type="file"
+                                multiple
+                                ref="fileInput"
+                                @change="handleFileUpload"
+                                class="hidden"
+                            />
                             <button @click="startChat">
                                 <Icon
                                     size="20px"
@@ -290,7 +335,7 @@
                 <div class="flex justify-between items-center py-1">
                     <button
                         class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
-                        @click="toggledocs(message)"
+                        @click="toggleDocsPanel"
                     >
                         <Icon
                             size="24px"
@@ -298,7 +343,6 @@
                             class="text-zinc-400 hover:text-zinc-800"
                         />
                     </button>
-                    <!-- 제출 버튼 (Enter 단독 제출 외에도 버튼 클릭 제출) -->
                     <button @click="sendMessage">
                         <Icon
                             size="20px"
@@ -308,6 +352,28 @@
                     </button>
                 </div>
             </div>
+        </div>
+        <!-- 채팅방 내부에서 업로드한 문서 목록 보기 -->
+        <div
+            v-if="activeChat && activeChat.isCustomDocs"
+            class="mt-2 bg-gray-100 p-2 rounded-md shadow"
+        >
+            <div class="font-semibold">📄 이 채팅방에서 업로드된 문서:</div>
+            <ul>
+                <li
+                    v-for="(doc, index) in activeChat.docs"
+                    :key="index"
+                    class="flex justify-between border-b p-1"
+                >
+                    {{ doc.name }} ({{ doc.size }}KB)
+                    <button
+                        @click="openViewer(doc)"
+                        class="text-blue-500 hover:text-blue-700"
+                    >
+                        👁️ 보기
+                    </button>
+                </li>
+            </ul>
         </div>
 
         <teleport to="body">
@@ -420,7 +486,10 @@ const formattedDate = computed(() => {
         second: "2-digit",
     });
 });
+const isCustomDocs = computed(() => activeChat.value?.isCustomDocs ?? false);
 
+const uploadedFiles = ref([]);
+const fileInput = ref(null);
 const chatRecords = ref([]);
 const activeChat = ref(null);
 const newMessage = ref("");
@@ -468,9 +537,40 @@ async function handleKeydown(event) {
     }
 }
 
+function triggerFileUpload() {
+    if (fileInput.value) {
+        fileInput.value.click();
+    }
+}
+
+function handleFileUpload(event) {
+    const files = Array.from(event.target.files);
+    files.forEach((file) => {
+        uploadedFiles.value.push({
+            name: file.name,
+            path: URL.createObjectURL(file), // 실제 업로드 기능이 구현되면 path 변경 필요
+            size: (file.size / 1024).toFixed(2), // KB 단위 변환
+        });
+    });
+}
+
+function removeFile(index) {
+    uploadedFiles.value.splice(index, 1);
+}
+
+function clearUploadedFiles() {
+    uploadedFiles.value = [];
+}
+
 function selectChatroom(room) {
+    if (!room) {
+        console.warn("⚠️ 채팅방이 존재하지 않습니다.");
+        activeChat.value = null;
+        return;
+    }
     fetchChatroom(room._id);
 }
+
 function newChat() {
     activeChat.value = null;
 }
@@ -569,16 +669,23 @@ async function startChat() {
     if (!activeChat.value) {
         try {
             const creationTime = new Date();
-            // const title = creationTime.toLocaleTimeString();
-            if (!newMessage.value.trim()) return; // 빈 메시지 방지
+            if (!newMessage.value.trim()) return;
             const title = newMessage.value.substring(0, 15);
+
             const res = await axios.post(`${API_URL}/chatrooms`, {
                 title,
                 creationTime,
+                isCustomDocs: uploadedFiles.value.length > 0,
+                docs: uploadedFiles.value, // 업로드한 문서 포함
             });
+
             if (res.data.success) {
                 chatRecords.value.unshift(res.data.data);
                 activeChat.value = res.data.data;
+
+                if (!activeChat.value.isCustomDocs) {
+                    uploadedFiles.value = [];
+                }
             }
         } catch (err) {
             console.error("채팅방 생성 실패:", err);
@@ -587,85 +694,107 @@ async function startChat() {
     await sendMessage();
 }
 
+async function fetchSystemDocs() {
+    try {
+        const res = await axios.get(`${API_URL}/system-docs`);
+        if (res.data.success) {
+            return res.data.data;
+        }
+    } catch (err) {
+        console.error("❌ 시스템 문서 가져오기 실패:", err);
+    }
+    return [];
+}
+
 async function sendMessage() {
-    console.log("send:" + newMessage.value);
-    if (newMessage.value.trim() !== "") {
-        try {
-            const payload = { text: newMessage.value, sender: "user" };
-            const res = await axios.post(
-                `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
-                payload
-            );
-            if (res.data.success) {
-                activeChat.value.chats.push(res.data.data);
+    console.log("📝 사용자 입력:", newMessage.value);
+    if (newMessage.value.trim() === "") return;
+
+    try {
+        const payload = { text: newMessage.value, sender: "user" };
+        const res = await axios.post(
+            `${API_URL}/chatrooms/${activeChat.value?._id}/chats`,
+            payload
+        );
+
+        if (res.data.success) {
+            activeChat.value.chats.push(res.data.data);
+        }
+
+        const userText = newMessage.value;
+        newMessage.value = "";
+
+        nextTick(() => {
+            if (chatMessagesRef.value) {
+                chatMessagesRef.value.scrollTop =
+                    chatMessagesRef.value.scrollHeight;
             }
-            const userText = newMessage.value;
-            newMessage.value = "";
+            updateHeight();
+        });
+
+        let responseDocs = [];
+        let responseText = "";
+
+        if (!activeChat.value) {
+            console.warn("⚠️ activeChat이 NULL, 기본 문서 로드");
+            activeChat.value = { isCustomDocs: false, docs: [] };
+        }
+
+        console.log("📝 채팅방 문서 기반 여부:", activeChat.value.isCustomDocs);
+        console.log("📂 채팅방의 문서 목록:", activeChat.value.docs);
+
+        if (activeChat.value.isCustomDocs && activeChat.value.docs.length > 0) {
+            // 🔹 업로드한 문서가 있는 경우 → 해당 문서만 사용
+            responseDocs = activeChat.value.docs;
+            responseText = "이 문서를 참고하세요.";
+        } else {
+            // 🔹 문서를 업로드하지 않은 경우 → 기본 문서 불러오기
+            responseDocs = await fetchSystemDocs();
+            responseText =
+                responseDocs.length > 0
+                    ? "기본 문서를 참고하여 답변을 제공합니다."
+                    : "❌ 사용할 문서가 없습니다.";
+
+            console.log("📂 기본 문서 목록:", responseDocs);
+        }
+
+        if (!responseDocs.length) {
+            console.warn("⚠️ 문서가 없어 답변을 생성할 수 없습니다.");
+            return;
+        }
+
+        //  봇의 응답 전송 (500ms 지연)
+        setTimeout(async () => {
+            const botPayload = {
+                text: responseText + "\n\n" + userText,
+                sender: "bot",
+                docs: responseDocs,
+            };
+
+            console.log("🚀 봇 응답 데이터:", botPayload); // 🛠️ 디버깅용
+
+            try {
+                const botRes = await axios.post(
+                    `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
+                    botPayload
+                );
+
+                if (botRes.data.success) {
+                    activeChat.value.chats.push(botRes.data.data);
+                }
+            } catch (err) {
+                console.error("❌ 봇 메시지 전송 실패:", err);
+            }
+
             nextTick(() => {
                 if (chatMessagesRef.value) {
                     chatMessagesRef.value.scrollTop =
                         chatMessagesRef.value.scrollHeight;
                 }
-                updateHeight();
             });
-            const dummyData = [
-                {
-                    answer: "KB라이프 무배당 소액암진단특약 입니다.",
-                    doc: {
-                        name: "KB라이프 무배당 소액암진단특약W(갱신형) 약관.pdf",
-                        path: "/document/KB라이프 무배당 소액암진단특약W(갱신형) 약관.pdf",
-                        size: "823KB",
-                    },
-                },
-                {
-                    answer: "KB생활비지급 암보험입니다.",
-
-                    doc: {
-                        name: "무배당 KB 생활비지급 암보험 갱신형.pdf",
-                        path: "/document/무배당 KB 생활비지급 암보험 갱신형.pdf",
-                        size: "505KB",
-                    },
-                },
-                {
-                    answer: "한화생명 간편가입 e시그니처암보험 무배당입니다.",
-                    doc: {
-                        name: "한화생명 간편가입 e시그니처암보험 무배당_2133-A01_상품요약서_20240101~          _1.pdf",
-                        path: "/document/한화생명 간편가입 e시그니처암보험 무배당_2133-A01_상품요약서_20240101~          _1.pdf",
-                        size: "734KB",
-                    },
-                },
-            ];
-            const randomIndex = Math.floor(Math.random() * dummyData.length);
-            const selectedData = dummyData[randomIndex]; // 문서도 매칭해서 하나만 포함
-
-            // 예시: 500ms 후 더미 봇 메시지 전송
-            setTimeout(async () => {
-                try {
-                    const botPayload = {
-                        text: selectedData.answer + "\n " + userText,
-                        sender: "bot",
-                        docs: [selectedData.doc],
-                    };
-                    const botRes = await axios.post(
-                        `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
-                        botPayload
-                    );
-                    if (botRes.data.success) {
-                        activeChat.value.chats.push(botRes.data.data);
-                    }
-                } catch (err) {
-                    console.error("봇 메시지 전송 실패:", err);
-                }
-                nextTick(() => {
-                    if (chatMessagesRef.value) {
-                        chatMessagesRef.value.scrollTop =
-                            chatMessagesRef.value.scrollHeight;
-                    }
-                });
-            }, 500);
-        } catch (err) {
-            console.error("메시지 전송 실패:", err);
-        }
+        }, 500);
+    } catch (err) {
+        console.error("❌ 메시지 전송 실패:", err);
     }
 }
 
