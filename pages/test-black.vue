@@ -696,7 +696,7 @@ async function startChat() {
                 title,
                 creationTime,
                 isCustomDocs: uploadedFiles.value.length > 0,
-                docs: uploadedFiles.value, // 업로드한 문서 포함
+                docs: [...uploadedFiles.value], // 업로드한 문서 포함
             });
 
             if (res.data.success) {
