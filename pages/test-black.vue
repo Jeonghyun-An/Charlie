@@ -64,7 +64,7 @@
                                 v-model="editableRoomName"
                                 @blur="submitRoomNameEdit(room)"
                                 :style="titleInputStyle"
-                                class="w-full p-1 border rounded focus:outline-none focus:ring focus:border-pink-400"
+                                class="w-full p-1 border rounded focus:outline-none focus:ring focus:border-zinc-400"
                                 autofocus
                             />
                         </template>
@@ -286,7 +286,7 @@
                             placeholder="질문을 입력하세요"
                             rows="2"
                             autofocus
-                            class="w-full px-2 py-2 resize-none outline-none"
+                            class="w-full max-h-40 px-2 py-2 resize-none outline-none"
                         ></textarea>
 
                         <div class="flex justify-between items-center py-1">
@@ -331,7 +331,7 @@
                     placeholder="질문을 입력하세요"
                     rows="2"
                     autofocus
-                    class="w-full px-2 py-2 resize-none outline-none"
+                    class="w-full max-h-40 px-2 py-2 resize-none outline-none"
                 ></textarea>
                 <div class="flex justify-between items-center py-1">
                     <button
