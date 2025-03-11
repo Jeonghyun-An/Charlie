@@ -257,23 +257,24 @@
                                 >
                                 <button
                                     @click="clearUploadedFiles"
-                                    class="text-xs text-red-500 hover:text-red-700"
+                                    class="text-xs text-red-600 hover:text-red-800"
                                 >
-                                    ✖ 모두 삭제
+                                    모두 삭제
                                 </button>
                             </div>
                             <ul>
                                 <li
                                     v-for="(file, index) in uploadedFiles"
                                     :key="index"
-                                    class="flex justify-between p-1 border-b"
+                                    class="flex justify-between items-center p-1 border-b text-sm"
                                 >
                                     {{ file.name }} ({{ file.size }}KB)
-                                    <button
-                                        @click="removeFile(index)"
-                                        class="text-red-500 hover:text-red-700"
-                                    >
-                                        ❌
+                                    <button @click="removeFile(index)">
+                                        <Icon
+                                            size="22px"
+                                            name="material-symbols:close-rounded"
+                                            class="text-zinc-400 hover:text-zinc-800"
+                                        />
                                     </button>
                                 </li>
                             </ul>
@@ -355,25 +356,40 @@
         </div>
         <!-- 채팅방 내부에서 업로드한 문서 목록 보기 -->
         <div
-            v-if="activeChat && activeChat.isCustomDocs"
-            class="mt-2 bg-gray-100 p-2 rounded-md shadow"
+            v-if="isDocsPanelOpen"
+            class="flex flex-col right-0 top-0 h-full w-[300px] bg-white shadow-lg border-l border-gray-300 p-4 overflow-y-auto transition-transform duration-300 text-sm"
         >
-            <div class="font-semibold">📄 이 채팅방에서 업로드된 문서:</div>
-            <ul>
-                <li
-                    v-for="(doc, index) in activeChat.docs"
-                    :key="index"
-                    class="flex justify-between border-b p-1"
-                >
-                    {{ doc.name }} ({{ doc.size }}KB)
-                    <button
-                        @click="openViewer(doc)"
-                        class="text-blue-500 hover:text-blue-700"
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-semibold">📄 업로드된 문서</h2>
+                <button @click="toggleDocsPanel">
+                    <Icon
+                        size="24px"
+                        name="material-symbols:close-rounded"
+                        class="text-zinc-400 hover:text-zinc-800"
+                    />
+                </button>
+            </div>
+            <div v-if="uploadedFiles.length">
+                <ul>
+                    <li
+                        v-for="(doc, index) in activeChat.docs"
+                        :key="index"
+                        class="flex justify-between items-center border-b p-1"
                     >
-                        👁️ 보기
-                    </button>
-                </li>
-            </ul>
+                        <span> {{ doc.name }} ({{ doc.size }}KB) </span>
+                        <button @click="openViewer(doc)">
+                            <Icon
+                                size="24px"
+                                name="material-symbols-light:document-search-outline-rounded"
+                                class="text-zinc-400 hover:text-zinc-800"
+                            />
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div v-else class="text-gray-500 text-sm text-center">
+                업로드된 문서가 없습니다.
+            </div>
         </div>
 
         <teleport to="body">
@@ -442,7 +458,7 @@
                 </button>
                 <button
                     @click="downloadPdf()"
-                    class="px-3 py-1 bg-zinc-500 text-white rounded-md hover:bg-zinc-800"
+                    class="px-3 py-1 bg-zinc-500 text-white rounded-lg hover:bg-zinc-800"
                 >
                     ⬇ 다운로드
                 </button>
@@ -490,6 +506,7 @@ const isCustomDocs = computed(() => activeChat.value?.isCustomDocs ?? false);
 
 const uploadedFiles = ref([]);
 const fileInput = ref(null);
+const isDocsPanelOpen = ref(false);
 const chatRecords = ref([]);
 const activeChat = ref(null);
 const newMessage = ref("");
@@ -507,6 +524,9 @@ const MAX_HEIGHT = 200;
 // });
 function toggleSidebar() {
     isSidebarOpen.value = !isSidebarOpen.value;
+}
+function toggleDocsPanel() {
+    isDocsPanelOpen.value = !isDocsPanelOpen.value;
 }
 function updateHeight() {
     const el = textareaRef.value;
