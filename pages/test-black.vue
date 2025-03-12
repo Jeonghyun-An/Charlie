@@ -289,31 +289,174 @@
                             class="w-full max-h-40 px-2 py-2 resize-none outline-none"
                         ></textarea>
 
-                        <div class="flex justify-between items-center py-1">
-                            <button
-                                class="relative px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
-                                @click="triggerFileUpload"
-                            >
-                                <Icon
-                                    size="24px"
-                                    name="mdi:paperclip"
+                        <div
+                            class="flex justify-between items-center py-1 text-sm"
+                        >
+                            <div class="relative">
+                                <button
+                                    @click="toggleUploadMenu"
+                                    ref="uploadMenuRef"
                                     class="text-zinc-400 hover:text-zinc-800"
+                                >
+                                    <Icon size="24px" name="mdi:paperclip" />
+                                </button>
+                                <div
+                                    v-if="showUploadMenu"
+                                    class="absolute bottom-full left-0 bg-white border rounded-md shadow-md p-2 w-40"
+                                >
+                                    <button
+                                        @click="triggerFileUpload"
+                                        class="block w-full text-left px-3 py-2 hover:bg-gray-200"
+                                    >
+                                        📁 문서 업로드
+                                    </button>
+                                    <button
+                                        @click="openDocumentGroupPopup"
+                                        class="block w-full text-left px-3 py-2 hover:bg-gray-200"
+                                    >
+                                        📂 문서 그룹 관리
+                                    </button>
+                                </div>
+                                <input
+                                    type="file"
+                                    multiple
+                                    ref="fileInput"
+                                    @change="handleFileUpload"
+                                    class="hidden"
                                 />
-                            </button>
-
-                            <!-- 숨겨진 파일 업로드 input -->
-                            <input
-                                type="file"
-                                multiple
-                                ref="fileInput"
-                                @change="handleFileUpload"
-                                class="hidden"
-                            />
+                                <div
+                                    v-if="showDocumentGroupPopup"
+                                    ref="documentGroupPopupRef"
+                                    class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+                                >
+                                    <div
+                                        class="bg-white p-5 rounded-md shadow-md w-96"
+                                    >
+                                        <h3 class="text-lg font-semibold mb-3">
+                                            📂 문서 그룹 관리
+                                        </h3>
+                                        <div class="mb-3">
+                                            <input
+                                                v-model="newGroupName"
+                                                placeholder="새 문서 그룹 이름"
+                                                class="p-2 border rounded-md w-full"
+                                            />
+                                            <button
+                                                @click="createGroup"
+                                                class="mt-2 w-full p-2 bg-zinc-800 text-white rounded-md"
+                                            >
+                                                + 그룹 생성
+                                            </button>
+                                        </div>
+                                        <ul class="space-y-2">
+                                            <li
+                                                v-for="(
+                                                    group, index
+                                                ) in documentGroups"
+                                                :key="group._id"
+                                                class="p-3 border rounded-md flex justify-between"
+                                            >
+                                                <input
+                                                    v-model="group.name"
+                                                    @blur="
+                                                        updateGroupName(group)
+                                                    "
+                                                    class="p-1 rounded-md"
+                                                />
+                                                <button
+                                                    @click="selectGroup(group)"
+                                                    class="text-blue-500 hover:text-blue-700"
+                                                >
+                                                    🖍 수정
+                                                </button>
+                                                <button
+                                                    @click="
+                                                        addDocumentGroup(group)
+                                                    "
+                                                    class="text-blue-500 hover:text-blue-700"
+                                                >
+                                                    ✅ 선택
+                                                </button>
+                                                <button
+                                                    @click="
+                                                        deleteGroup(group._id)
+                                                    "
+                                                    class="text-red-500 hover:text-red-700"
+                                                >
+                                                    ❌
+                                                </button>
+                                            </li>
+                                        </ul>
+                                        <button
+                                            @click="closeDocumentGroupPopup"
+                                            class="mt-3 w-full p-2 bg-zinc-500 text-white rounded-md"
+                                        >
+                                            닫기
+                                        </button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="selectedGroup"
+                                    class="fixed right-0 top-0 h-full w-96 bg-white p-5 shadow-lg border-l"
+                                >
+                                    <h3 class="text-lg font-semibold mb-3">
+                                        📂 {{ selectedGroup.name }}
+                                    </h3>
+                                    <div
+                                        class="flex justify-between items-center mb-3"
+                                    >
+                                        <label
+                                            class="cursor-pointer px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-800"
+                                        >
+                                            📁 파일 추가
+                                            <input
+                                                type="file"
+                                                multiple
+                                                @change="handleFileAddToGroup"
+                                                class="hidden"
+                                            />
+                                        </label>
+                                        <button
+                                            @click="closeGroupView"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            확인
+                                        </button>
+                                    </div>
+                                    <ul class="space-y-2">
+                                        <li
+                                            v-for="(
+                                                doc, index
+                                            ) in selectedGroup.docs"
+                                            :key="index"
+                                            class="flex justify-between"
+                                        >
+                                            <span
+                                                >{{ doc.name }} ({{
+                                                    doc.size
+                                                }}KB)</span
+                                            >
+                                            <button
+                                                @click="
+                                                    removeFileFromGroup(index)
+                                                "
+                                                class="text-red-500 hover:text-red-700"
+                                            >
+                                                ❌
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                             <button @click="startChat">
                                 <Icon
                                     size="20px"
                                     name="qlementine-icons:send-16"
                                     class="text-zinc-400 hover:text-zinc-800"
+                                    :class="{
+                                        'opacity-50 cursor-not-allowed pointer-events-none':
+                                            showDocumentGroupPopup,
+                                    }"
                                 />
                             </button>
                         </div>
@@ -354,7 +497,6 @@
                 </div>
             </div>
         </div>
-        <!-- 채팅방 내부에서 업로드한 문서 목록 보기 -->
         <div
             v-if="isDocsPanelOpen"
             class="flex flex-col right-0 top-0 h-full w-[300px] bg-white shadow-lg border-l border-gray-300 p-4 overflow-y-auto transition-transform duration-300 text-sm"
@@ -504,6 +646,12 @@ const formattedDate = computed(() => {
 });
 const isCustomDocs = computed(() => activeChat.value?.isCustomDocs ?? false);
 
+const selectedGroup = ref(null);
+const showUploadMenu = ref(false);
+const showDocumentGroupPopup = ref(false);
+const documentGroups = ref([]);
+const newGroupName = ref("");
+const selectedGroupName = ref(null); // 문서 그룹 선택 시 채팅 이름 유지
 const uploadedFiles = ref([]);
 const fileInput = ref(null);
 const isDocsPanelOpen = ref(false);
@@ -514,14 +662,20 @@ const activeMenuId = ref(null);
 const menuStyle = reactive({ top: "0px", left: "0px" });
 const isSidebarOpen = ref(true); // 사이드바 상태 추가
 
+const uploadMenuRef = ref(null);
 const chatMessagesRef = ref(null);
 const teleportMenuRef = ref(null);
 const textareaRef = ref(null);
 const MAX_HEIGHT = 200;
-// const { textarea } = useTextareaAutosize({
-//     styleProp: "minHeight",
-//     maxRows: 4,
-// });
+
+onClickOutside(uploadMenuRef, () => {
+    showUploadMenu.value = false;
+});
+
+onClickOutside(teleportMenuRef, () => {
+    activeMenuId.value = false;
+});
+
 function toggleSidebar() {
     isSidebarOpen.value = !isSidebarOpen.value;
 }
@@ -556,24 +710,138 @@ async function handleKeydown(event) {
         }
     }
 }
+// Paperclip 메뉴 토글
+function toggleUploadMenu() {
+    showUploadMenu.value = !showUploadMenu.value;
+}
+
+async function handleFileUpload(event) {
+    const files = Array.from(event.target.files);
+
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await axios.post(`${API_URL}/upload`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            if (res.data.success) {
+                uploadedFiles.value.push({
+                    name: res.data.file.name,
+                    path: res.data.file.path, // 서버에서 반환한 저장된 경로
+                    size: res.data.file.size,
+                });
+            } else {
+                console.error("❌ 파일 업로드 실패:", res.data);
+            }
+        } catch (err) {
+            console.error("❌ 서버로 파일 업로드 중 오류 발생:", err);
+        }
+    }
+
+    showUploadMenu.value = false;
+}
 
 function triggerFileUpload() {
-    if (fileInput.value) {
-        fileInput.value.click();
+    fileInput.value.click();
+}
+
+// 📂 문서 그룹
+function openDocumentGroupPopup() {
+    showDocumentGroupPopup.value = true;
+    fetchDocumentGroups();
+}
+
+function closeDocumentGroupPopup() {
+    showDocumentGroupPopup.value = false;
+}
+
+async function fetchDocumentGroups() {
+    try {
+        const res = await axios.get(`${API_URL}/document-groups`);
+        if (res.data.success) {
+            documentGroups.value = res.data.data;
+        }
+    } catch (err) {
+        console.error("❌ 문서 그룹 불러오기 실패:", err);
     }
 }
 
-function handleFileUpload(event) {
-    const files = Array.from(event.target.files);
-    files.forEach((file) => {
-        uploadedFiles.value.push({
-            name: file.name,
-            path: URL.createObjectURL(file), // 실제 업로드 기능이 구현되면 path 변경 필요
-            size: (file.size / 1024).toFixed(2), // KB 단위 변환
+async function createGroup() {
+    if (!newGroupName.value.trim()) return;
+
+    try {
+        const res = await axios.post(`${API_URL}/document-groups`, {
+            name: newGroupName.value,
+            docs: [],
         });
-    });
+        if (res.data.success) {
+            documentGroups.value.push(res.data.data);
+            newGroupName.value = "";
+        }
+    } catch (err) {
+        console.error("❌ 문서 그룹 생성 실패:", err);
+    }
 }
 
+async function updateGroupName(group) {
+    try {
+        await axios.put(`${API_URL}/document-groups/${group._id}`, {
+            name: group.name,
+            docs: group.docs,
+        });
+    } catch (err) {
+        console.error("❌ 문서 그룹 이름 수정 실패:", err);
+    }
+}
+
+async function deleteGroup(id) {
+    try {
+        await axios.delete(`${API_URL}/document-groups/${id}`);
+        documentGroups.value = documentGroups.value.filter(
+            (group) => group._id !== id
+        );
+    } catch (err) {
+        console.error("❌ 문서 그룹 삭제 실패:", err);
+    }
+}
+
+function selectGroup(group) {
+    selectedGroup.value = group;
+}
+
+function closeGroupView() {
+    selectedGroup.value = null;
+}
+
+function removeFileFromGroup(index) {
+    selectedGroup.value.docs.splice(index, 1);
+    updateGroupName(selectedGroup.value);
+}
+function handleFileAddToGroup(event) {
+    const files = Array.from(event.target.files);
+    files.forEach((file) => {
+        selectedGroup.value.docs.push({
+            name: file.name,
+            path: URL.createObjectURL(file),
+            size: (file.size / 1024).toFixed(2),
+        });
+    });
+
+    updateGroupName(selectedGroup.value);
+}
+
+function addDocumentGroup(group) {
+    uploadedFiles.value.push(...group.docs);
+    selectedGroupName.value = group.name; // 채팅방 제목 유지
+    showDocumentGroupPopup.value = false;
+    showUploadMenu.value = false;
+}
+onMounted(fetchDocumentGroups);
+
+// 파일 업로드
 function removeFile(index) {
     uploadedFiles.value.splice(index, 1);
 }
@@ -593,6 +861,10 @@ function selectChatroom(room) {
 
 function newChat() {
     activeChat.value = null;
+    newMessage.value = "";
+    isDocsPanelOpen.value = false;
+    uploadedFiles.value = [];
+    selectedGroup.value = null;
 }
 function toggleMenu(id, event) {
     if (activeMenuId.value === id) {
@@ -673,6 +945,11 @@ async function fetchChatroom(id) {
         const res = await axios.get(`${API_URL}/chatrooms/${id}`);
         if (res.data.success) {
             activeChat.value = res.data.data;
+            isDocsPanelOpen.value = false;
+            newMessage.value = "";
+            if (activeChat.value.isCustomDocs) {
+                uploadedFiles.value = [...activeChat.value.docs];
+            }
             nextTick(() => {
                 if (chatMessagesRef.value) {
                     chatMessagesRef.value.scrollTop =
@@ -688,15 +965,30 @@ async function fetchChatroom(id) {
 async function startChat() {
     if (!activeChat.value) {
         try {
-            const creationTime = new Date();
+            let docs = [];
+            let creationTime = new Date();
+            let title = newMessage.value.substring(0, 15);
+            let isCustomDocs = false;
+
+            if (selectedGroup.value) {
+                // 문서 그룹 기반 채팅방 생성
+                docs = [...selectedGroup.value.docs];
+                title = `📂 ${selectedGroup.value.name} 기반 채팅`;
+                isCustomDocs = true;
+            } else if (uploadedFiles.value.length > 0) {
+                // 개별 업로드된 파일 기반 채팅
+                docs = [...uploadedFiles.value];
+                isCustomDocs = true;
+            } else if (selectGroup.value && uploadedFiles.value.length > 0) {
+                docs = [...selectedGroup.value.name, ...uploadedFiles.value];
+            }
             if (!newMessage.value.trim()) return;
-            const title = newMessage.value.substring(0, 15);
 
             const res = await axios.post(`${API_URL}/chatrooms`, {
                 title,
                 creationTime,
-                isCustomDocs: uploadedFiles.value.length > 0,
-                docs: [...uploadedFiles.value], // 업로드한 문서 포함
+                isCustomDocs,
+                docs,
             });
 
             if (res.data.success) {
@@ -705,6 +997,7 @@ async function startChat() {
 
                 if (!activeChat.value.isCustomDocs) {
                     uploadedFiles.value = [];
+                    selectedGroup.value = null;
                 }
             }
         } catch (err) {
@@ -790,9 +1083,6 @@ async function sendMessage() {
                 sender: "bot",
                 docs: responseDocs,
             };
-
-            console.log("🚀 봇 응답 데이터:", botPayload); // 🛠️ 디버깅용
-
             try {
                 const botRes = await axios.post(
                     `${API_URL}/chatrooms/${activeChat.value._id}/chats`,
@@ -831,6 +1121,7 @@ function viewInfo(doc) {
     );
 }
 
+// pdf뷰어
 const pdfViewer = ref({
     isOpen: false,
     title: "",

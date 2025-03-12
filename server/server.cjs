@@ -65,6 +65,106 @@ app.get("/api/system-docs", async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+const DocumentGroupSchema = new mongoose.Schema({
+    name: String, // 문서 그룹 이름
+    docs: [{ name: String, path: String, size: String }], // 문서 목록
+    createdAt: { type: Date, default: Date.now },
+});
+
+const DocumentGroup = mongoose.model("DocumentGroup", DocumentGroupSchema);
+
+// 📂 문서 그룹 가져오기
+app.get("/api/document-groups", async (req, res) => {
+    try {
+        const groups = await DocumentGroup.find().sort({ createdAt: -1 });
+        res.json({ success: true, data: groups });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 📂 문서 그룹 생성 + 문서 추가
+app.post("/api/document-groups", async (req, res) => {
+    try {
+        const { name, docs } = req.body;
+        const newGroup = new DocumentGroup({ name, docs: docs || [] });
+        await newGroup.save();
+        res.status(201).json({ success: true, data: newGroup });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// 📂 문서 그룹 수정 (이름 & 파일 추가/삭제)
+app.put("/api/document-groups/:id", async (req, res) => {
+    try {
+        const { name, docs } = req.body;
+        const group = await DocumentGroup.findByIdAndUpdate(
+            req.params.id,
+            { name, docs },
+            { new: true }
+        );
+        res.json({ success: true, data: group });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// ❌ 문서 그룹 삭제
+app.delete("/api/document-groups/:id", async (req, res) => {
+    try {
+        await DocumentGroup.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// 📂 Multer 설정
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+// 📂 `uploads` 디렉토리 없으면 생성
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    },
+});
+
+const upload = multer({ storage });
+
+// ✅ 파일 업로드 API
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res
+                .status(400)
+                .json({ success: false, error: "파일이 없습니다." });
+        }
+
+        const fileData = {
+            name: req.file.originalname,
+            path: `/uploads/${req.file.filename}`, // 서버에 저장된 파일 경로
+            size: (req.file.size / 1024).toFixed(2) + " KB",
+        };
+
+        res.status(201).json({ success: true, file: fileData });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 📂 정적 파일 제공 (업로드된 파일 접근 가능하도록 설정)
+app.use("/uploads", express.static(uploadDir));
 
 // ✅ 모든 채팅방 조회
 app.get("/api/chatrooms", async (req, res) => {
