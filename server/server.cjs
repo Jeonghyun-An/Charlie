@@ -119,8 +119,34 @@ app.delete("/api/document-groups/:id", async (req, res) => {
         res.status(400).json({ success: false, error: err.message });
     }
 });
+const FileSchema = new mongoose.Schema({
+    name: String,
+    path: String, // ✅ 파일 경로를 저장 (Buffer 제거)
+    contentType: String,
+    size: String,
+    createdAt: { type: Date, default: Date.now },
+});
 
-// 📂 Multer 설정
+const File = mongoose.model("File", FileSchema);
+
+app.get("/api/files/:id", async (req, res) => {
+    try {
+        const file = await File.findById(req.params.id);
+        if (!file) {
+            return res
+                .status(404)
+                .json({ success: false, error: "파일을 찾을 수 없습니다." });
+        }
+
+        // ✅ 로컬 파일 경로 설정
+        const filePath = path.join(__dirname, file.path);
+        res.sendFile(filePath); // ✅ 파일을 직접 클라이언트에 전송
+    } catch (err) {
+        console.error("❌ 파일 가져오기 실패:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -131,6 +157,7 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// ✅ Multer 설정 (파일을 `uploads/` 폴더에 저장)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, uploadDir);
@@ -142,7 +169,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ 파일 업로드 API
 app.post("/api/upload", upload.single("file"), async (req, res) => {
     try {
         if (!req.file) {
@@ -151,14 +177,27 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
                 .json({ success: false, error: "파일이 없습니다." });
         }
 
-        const fileData = {
-            name: req.file.originalname,
-            path: `/uploads/${req.file.filename}`, // 서버에 저장된 파일 경로
-            size: (req.file.size / 1024).toFixed(2) + " KB",
-        };
+        const originalFileName = Buffer.from(
+            req.file.originalname,
+            "latin1"
+        ).toString("utf8");
 
-        res.status(201).json({ success: true, file: fileData });
+        console.log("📂 업로드된 파일:", originalFileName);
+
+        // ✅ 파일 정보를 MongoDB에 저장
+        const fileData = new File({
+            name: originalFileName, // ✅ UTF-8로 변환된 파일명 저장
+            path: `/uploads/${req.file.filename}`, // ✅ 서버에 저장된 파일 경로
+            contentType: req.file.mimetype,
+            size: (req.file.size / 1024).toFixed(2) + " KB",
+        });
+
+        const savedFile = await fileData.save();
+        console.log("✅ 파일 저장 완료:", savedFile);
+
+        res.status(201).json({ success: true, file: savedFile });
     } catch (err) {
+        console.error("❌ 파일 업로드 실패:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

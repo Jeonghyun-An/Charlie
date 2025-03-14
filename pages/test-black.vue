@@ -448,7 +448,7 @@
                                     </ul>
                                 </div>
                             </div>
-                            <button @click="startChat">
+                            <button @click="startChatWrapper()">
                                 <Icon
                                     size="20px"
                                     name="qlementine-icons:send-16"
@@ -704,7 +704,7 @@ async function handleKeydown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         if (!activeChat.value) {
-            await startChat();
+            await startChatWrapper();
         } else {
             await sendMessage();
         }
@@ -715,9 +715,17 @@ function toggleUploadMenu() {
     showUploadMenu.value = !showUploadMenu.value;
 }
 
-async function handleFileUpload(event) {
-    const files = Array.from(event.target.files);
+async function handleFileUpload(event = null) {
+    const files = event?.target?.files ? Array.from(event.target.files) : [];
 
+    if (files.length === 0 && uploadedFiles.value.length === 0) {
+        console.warn("⚠️ 파일이 없습니다. 업로드를 건너뜁니다.");
+        return;
+    }
+
+    let uploadedFileIds = [];
+
+    // ✅ 새로운 파일 업로드
     for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
@@ -727,14 +735,21 @@ async function handleFileUpload(event) {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
-            if (res.data.success) {
-                uploadedFiles.value.push({
+            if (res.data.success && res.data.file._id) {
+                const uploadedFile = {
+                    _id: res.data.file._id,
                     name: res.data.file.name,
-                    path: res.data.file.path, // 서버에서 반환한 저장된 경로
+                    path: `/api/files/${res.data.file._id}`,
                     size: res.data.file.size,
-                });
+                };
+
+                uploadedFiles.value.push(uploadedFile);
+                uploadedFileIds.push(uploadedFile._id);
             } else {
-                console.error("❌ 파일 업로드 실패:", res.data);
+                console.error(
+                    "❌ 파일 업로드 실패: 응답이 올바르지 않음",
+                    res.data
+                );
             }
         } catch (err) {
             console.error("❌ 서버로 파일 업로드 중 오류 발생:", err);
@@ -810,6 +825,18 @@ async function deleteGroup(id) {
 
 function selectGroup(group) {
     selectedGroup.value = group;
+
+    // ✅ 파일 경로를 `/api/files/:id` 형식으로 변환
+    selectedGroup.value.docs = group.docs.map((doc) => ({
+        _id: doc._id,
+        name: doc.name,
+        path: `/api/files/${doc._id}`, // ✅ API 경로로 변경
+        size: doc.size.includes("KB")
+            ? doc.size
+            : (doc.size / 1024).toFixed(2) + " KB",
+    }));
+
+    console.log("📂 선택된 문서 그룹:", selectedGroup.value);
 }
 
 function closeGroupView() {
@@ -961,47 +988,89 @@ async function fetchChatroom(id) {
         console.error("채팅방 상세 불러오기 실패:", err);
     }
 }
+async function startChatWrapper(event = null) {
+    if (uploadedFiles.value.length > 0) {
+        console.log("📂 파일이 이미 업로드됨, 바로 채팅 시작");
+        await startChat(); // ✅ 이미 업로드된 경우 바로 startChat() 실행
+    } else if (event) {
+        console.log("📂 파일 업로드 후 채팅 시작");
+        await handleFileUpload(event); // ✅ 이벤트가 있는 경우에만 실행
+    } else {
+        console.log("💬 문서 없이 채팅 시작");
+        await startChat(); // ✅ 문서 없이 바로 채팅 시작
+    }
+}
 
 async function startChat() {
     if (!activeChat.value) {
         try {
-            let docs = [];
+            let docs = new Set();
             let creationTime = new Date();
             let title = newMessage.value.substring(0, 15);
             let isCustomDocs = false;
 
+            // ✅ 문서 그룹이 선택된 경우
             if (selectedGroup.value) {
-                // 문서 그룹 기반 채팅방 생성
-                docs = [...selectedGroup.value.docs];
+                selectedGroup.value.docs.forEach((doc) => {
+                    docs.add(
+                        JSON.stringify({
+                            _id: doc._id,
+                            name: doc.name,
+                            path: `/api/files/${doc._id}`,
+                            size: doc.size.includes("KB")
+                                ? doc.size
+                                : (doc.size / 1024).toFixed(2) + " KB",
+                        })
+                    );
+                });
                 title = `📂 ${selectedGroup.value.name} 기반 채팅`;
                 isCustomDocs = true;
-            } else if (uploadedFiles.value.length > 0) {
-                // 개별 업로드된 파일 기반 채팅
-                docs = [...uploadedFiles.value];
-                isCustomDocs = true;
-            } else if (selectGroup.value && uploadedFiles.value.length > 0) {
-                docs = [...selectedGroup.value.name, ...uploadedFiles.value];
             }
+
+            // ✅ 사용자가 직접 업로드한 문서 추가
+            uploadedFiles.value.forEach((file) => {
+                if (!file._id) {
+                    console.warn(
+                        "⚠️ 업로드된 파일에 ID가 없습니다. 파일 업로드 API 응답 확인 필요."
+                    );
+                    return;
+                }
+                docs.add(
+                    JSON.stringify({
+                        _id: file._id,
+                        name: file.name,
+                        path: `/api/files/${file._id}`,
+                        size: file.size.includes("KB")
+                            ? file.size
+                            : (file.size / 1024).toFixed(2) + " KB",
+                    })
+                );
+            });
+
+            if (docs.size > 0) {
+                isCustomDocs = true;
+            }
+
             if (!newMessage.value.trim()) return;
+
+            const docArray = Array.from(docs).map(JSON.parse);
 
             const res = await axios.post(`${API_URL}/chatrooms`, {
                 title,
                 creationTime,
                 isCustomDocs,
-                docs,
+                docs: docArray,
             });
 
             if (res.data.success) {
                 chatRecords.value.unshift(res.data.data);
                 activeChat.value = res.data.data;
 
-                if (!activeChat.value.isCustomDocs) {
-                    uploadedFiles.value = [];
-                    selectedGroup.value = null;
-                }
+                uploadedFiles.value = [];
+                selectedGroup.value = null;
             }
         } catch (err) {
-            console.error("채팅방 생성 실패:", err);
+            console.error("❌ 채팅방 생성 실패:", err);
         }
     }
     await sendMessage();
@@ -1020,9 +1089,7 @@ async function fetchSystemDocs() {
 }
 
 async function sendMessage() {
-    console.log("📝 사용자 입력:", newMessage.value);
     if (newMessage.value.trim() === "") return;
-
     try {
         const payload = { text: newMessage.value, sender: "user" };
         const res = await axios.post(
@@ -1132,14 +1199,19 @@ const pdfViewer = ref({
 
 const pdfCanvas = ref(null);
 let pdfDoc = null;
+
 async function openViewer(doc) {
-    if (!doc || !doc.path) {
-        alert("⚠️ 문서 경로가 없습니다.");
-        return;
+    let fileUrl = doc.path;
+
+    if (!fileUrl.startsWith("/document")) {
+        fileUrl = `http://localhost:3001/api/files/${doc._id}`;
     }
+
+    console.log("📂 PDF 뷰어 열기 - 파일 경로:", fileUrl);
+
     pdfViewer.value.isOpen = true;
     pdfViewer.value.title = doc.name;
-    pdfViewer.value.url = doc.path;
+    pdfViewer.value.url = fileUrl;
     pdfViewer.value.currentPage = 1;
     await loadPdf();
 }
@@ -1185,8 +1257,14 @@ function downloadPdf(doc = null) {
     if (!doc && pdfViewer.value.isOpen) {
         filePath = pdfViewer.value.url;
         fileName = pdfViewer.value.title;
+    } else if (doc?._id) {
+        filePath = `http://localhost:3001/api/files/${doc._id}`;
+        fileName = doc.name || "다운로드.pdf";
     } else if (doc?.path) {
         filePath = doc.path;
+        if (!filePath.startsWith("/document")) {
+            filePath = `http://localhost:3001/api/files/${doc._id}`;
+        }
         fileName = doc.name || "다운로드.pdf";
     } else {
         alert("⚠️ 파일을 다운로드할 수 없습니다. 다시 시도해주세요.");
