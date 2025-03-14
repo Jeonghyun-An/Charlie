@@ -516,14 +516,16 @@
                     <li
                         v-for="(doc, index) in activeChat.docs"
                         :key="index"
-                        class="flex justify-between items-center border-b p-1"
+                        class="flex justify-between items-center border-b p-1 break-words whitespace-pre-wrap overflow-auto"
                     >
-                        <span> {{ doc.name }} ({{ doc.size }}KB) </span>
+                        <span class="max-w-[230px]">
+                            {{ doc.name }} ({{ doc.size }}KB)
+                        </span>
                         <button @click="openViewer(doc)">
                             <Icon
                                 size="24px"
                                 name="material-symbols-light:document-search-outline-rounded"
-                                class="text-zinc-400 hover:text-zinc-800"
+                                class="flex text-zinc-400 hover:text-zinc-800"
                             />
                         </button>
                     </li>
@@ -559,6 +561,11 @@
             </div>
         </teleport>
     </div>
+    <div v-if="isLoading" class="loading-overlay">
+        <Icon name="eos-icons:bubble-loading"></Icon>
+        <p class="text-white text-sm mt-4">로딩 중...</p>
+    </div>
+
     <!-- PDF 뷰어 모달 -->
     <div
         v-if="pdfViewer.isOpen"
@@ -661,6 +668,7 @@ const newMessage = ref("");
 const activeMenuId = ref(null);
 const menuStyle = reactive({ top: "0px", left: "0px" });
 const isSidebarOpen = ref(true); // 사이드바 상태 추가
+const isLoading = ref(false); // ✅ 로딩 상태 변수 추가
 
 const uploadMenuRef = ref(null);
 const chatMessagesRef = ref(null);
@@ -716,10 +724,13 @@ function toggleUploadMenu() {
 }
 
 async function handleFileUpload(event = null) {
+    isLoading.value = true; // ✅ 로딩 시작
+
     const files = event?.target?.files ? Array.from(event.target.files) : [];
 
     if (files.length === 0 && uploadedFiles.value.length === 0) {
         console.warn("⚠️ 파일이 없습니다. 업로드를 건너뜁니다.");
+        isLoading.value = false;
         return;
     }
 
@@ -757,6 +768,7 @@ async function handleFileUpload(event = null) {
     }
 
     showUploadMenu.value = false;
+    isLoading.value = false;
 }
 
 function triggerFileUpload() {
@@ -830,7 +842,9 @@ function selectGroup(group) {
     selectedGroup.value.docs = group.docs.map((doc) => ({
         _id: doc._id,
         name: doc.name,
-        path: `/api/files/${doc._id}`, // ✅ API 경로로 변경
+        path: doc.path.startsWith("/api/files/")
+            ? doc.path
+            : `/api/files/${doc._id}`, // ✅ API 경로로 변환
         size: doc.size.includes("KB")
             ? doc.size
             : (doc.size / 1024).toFixed(2) + " KB",
@@ -1003,6 +1017,7 @@ async function startChatWrapper(event = null) {
 
 async function startChat() {
     if (!activeChat.value) {
+        isLoading.value = true;
         try {
             let docs = new Set();
             let creationTime = new Date();
@@ -1023,7 +1038,6 @@ async function startChat() {
                         })
                     );
                 });
-                title = `📂 ${selectedGroup.value.name} 기반 채팅`;
                 isCustomDocs = true;
             }
 
@@ -1071,6 +1085,8 @@ async function startChat() {
             }
         } catch (err) {
             console.error("❌ 채팅방 생성 실패:", err);
+        } finally {
+            isLoading.value = false;
         }
     }
     await sendMessage();
