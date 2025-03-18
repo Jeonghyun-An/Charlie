@@ -477,16 +477,24 @@
                     class="w-full max-h-40 px-2 py-2 resize-none outline-none"
                 ></textarea>
                 <div class="flex justify-between items-center py-1">
-                    <button
-                        class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
-                        @click="toggleDocsPanel"
-                    >
-                        <Icon
-                            size="24px"
-                            name="mdi:paperclip"
-                            class="text-zinc-400 hover:text-zinc-800"
-                        />
-                    </button>
+                    <div class="relative group">
+                        <button
+                            class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
+                            @click="toggleDocsPanel"
+                        >
+                            <Icon
+                                size="24px"
+                                name="mdi:paperclip"
+                                class="text-zinc-400 hover:text-zinc-800"
+                            />
+                        </button>
+                        <div
+                            class="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity pointer-events-none"
+                        >
+                            문서 확인
+                        </div>
+                    </div>
+
                     <button @click="sendMessage">
                         <Icon
                             size="20px"
@@ -565,55 +573,13 @@
         <Icon name="eos-icons:bubble-loading"></Icon>
         <p class="text-white text-sm mt-4">로딩 중...</p>
     </div>
-
-    <!-- PDF 뷰어 모달 -->
-    <div
-        v-if="pdfViewer.isOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-    >
-        <div
-            class="bg-white rounded-lg p-4 shadow-lg max-w-4xl w-full relative"
-        >
-            <button
-                @click="closePdfViewer"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
-            >
-                ✖
-            </button>
-            <h2 class="font-semibold mb-2 text-center">
-                {{ pdfViewer.title }}
-            </h2>
-            <div class="pdf-container overflow-y-auto max-h-[80vh] p-2">
-                <canvas ref="pdfCanvas"></canvas>
-            </div>
-            <div
-                class="flex justify-between items-center mt-3 ml-56 text-sm p-1"
-            >
-                <button
-                    @click="prevPage"
-                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded-lg"
-                >
-                    ◀ 이전
-                </button>
-                <span
-                    >{{ pdfViewer.currentPage }} /
-                    {{ pdfViewer.totalPages }}</span
-                >
-                <button
-                    @click="nextPage"
-                    class="px-3 py-1 bg-zinc-200 hover:bg-zinc-300 rounded-lg"
-                >
-                    다음 ▶
-                </button>
-                <button
-                    @click="downloadPdf()"
-                    class="px-3 py-1 bg-zinc-500 text-white rounded-lg hover:bg-zinc-800"
-                >
-                    ⬇ 다운로드
-                </button>
-            </div>
-        </div>
-    </div>
+    <PDFViewer
+        :pdfViewer="pdfViewer"
+        @close="closePdfViewer"
+        @prev="prevPage"
+        @next="nextPage"
+        @download="downloadPdf"
+    />
 </template>
 
 <script setup>
@@ -621,6 +587,7 @@ import { ref, reactive, nextTick, watch, onMounted } from "vue";
 import { onClickOutside } from "@vueuse/core";
 import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
+import PDFViewer from "@/components/PDFViewer.vue";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
@@ -835,7 +802,7 @@ async function deleteGroup(id) {
     }
 }
 
-function selectGroup(group) {
+async function selectGroup(group) {
     selectedGroup.value = group;
 
     // ✅ 파일 경로를 `/api/files/:id` 형식으로 변환
@@ -849,7 +816,6 @@ function selectGroup(group) {
             ? doc.size
             : (doc.size / 1024).toFixed(2) + " KB",
     }));
-
     console.log("📂 선택된 문서 그룹:", selectedGroup.value);
 }
 
@@ -861,26 +827,69 @@ function removeFileFromGroup(index) {
     selectedGroup.value.docs.splice(index, 1);
     updateGroupName(selectedGroup.value);
 }
-function handleFileAddToGroup(event) {
+async function handleFileAddToGroup(event) {
     const files = Array.from(event.target.files);
-    files.forEach((file) => {
-        selectedGroup.value.docs.push({
-            name: file.name,
-            path: URL.createObjectURL(file),
-            size: (file.size / 1024).toFixed(2),
-        });
-    });
+    if (files.length === 0) {
+        console.warn("⚠️ 선택된 파일이 없습니다.");
+        return;
+    }
 
-    updateGroupName(selectedGroup.value);
+    isLoading.value = true; // ✅ 로딩 시작
+
+    let uploadedFileIds = [];
+
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await axios.post(`${API_URL}/upload`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            if (res.data.success && res.data.file._id) {
+                const uploadedFile = {
+                    _id: res.data.file._id,
+                    name: res.data.file.name,
+                    path: `/api/files/${res.data.file._id}`, // ✅ API 경로로 지정
+                    size: (file.size / 1024).toFixed(2) + " KB",
+                };
+
+                selectedGroup.value.docs.push(uploadedFile); // ✅ 문서 그룹에 추가
+                uploadedFiles.value.push(uploadedFile); // ✅ 업로드된 파일에도 추가
+                uploadedFileIds.push(uploadedFile._id);
+            }
+        } catch (err) {
+            console.error("❌ 파일 업로드 중 오류 발생:", err);
+        }
+    }
+
+    isLoading.value = false; // ✅ 로딩 해제
+
+    if (uploadedFileIds.length > 0) {
+        console.log(
+            "📂 파일 업로드 완료, 문서 그룹 업데이트:",
+            uploadedFiles.value
+        );
+        await updateGroupName(selectedGroup.value); // ✅ 문서 그룹 업데이트
+    } else {
+        console.warn("⚠️ 업로드된 파일이 없음, 문서 그룹 업데이트 안함.");
+    }
 }
 
 function addDocumentGroup(group) {
-    uploadedFiles.value.push(...group.docs);
-    selectedGroupName.value = group.name; // 채팅방 제목 유지
+    const existingFileIds = new Set(
+        uploadedFiles.value.map((file) => file._id)
+    );
+
+    const newFiles = group.docs.filter((doc) => !existingFileIds.has(doc._id));
+
+    uploadedFiles.value.push(...newFiles);
+
+    selectedGroupName.value = group.name;
     showDocumentGroupPopup.value = false;
     showUploadMenu.value = false;
 }
-onMounted(fetchDocumentGroups);
 
 // 파일 업로드
 function removeFile(index) {
@@ -1213,9 +1222,6 @@ const pdfViewer = ref({
     totalPages: 1,
 });
 
-const pdfCanvas = ref(null);
-let pdfDoc = null;
-
 async function openViewer(doc) {
     let fileUrl = doc.path;
 
@@ -1229,42 +1235,21 @@ async function openViewer(doc) {
     pdfViewer.value.title = doc.name;
     pdfViewer.value.url = fileUrl;
     pdfViewer.value.currentPage = 1;
-    await loadPdf();
 }
 
-async function loadPdf() {
-    if (!pdfViewer.value.url) return;
-    const loadingTask = pdfjsLib.getDocument(pdfViewer.value.url);
-    pdfDoc = await loadingTask.promise;
-    pdfViewer.value.totalPages = pdfDoc.numPages;
-    renderPage(pdfViewer.value.currentPage);
+function closePdfViewer() {
+    pdfViewer.value.isOpen = false;
 }
 
-async function renderPage(pageNumber) {
-    if (!pdfDoc) return;
-    const page = await pdfDoc.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 1.3 });
-
-    const canvas = pdfCanvas.value;
-    const context = canvas.getContext("2d");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    const renderContext = { canvasContext: context, viewport };
-    await page.render(renderContext).promise;
-}
-
-function nextPage() {
+async function nextPage() {
     if (pdfViewer.value.currentPage < pdfViewer.value.totalPages) {
         pdfViewer.value.currentPage++;
-        renderPage(pdfViewer.value.currentPage);
     }
 }
 
-function prevPage() {
+async function prevPage() {
     if (pdfViewer.value.currentPage > 1) {
         pdfViewer.value.currentPage--;
-        renderPage(pdfViewer.value.currentPage);
     }
 }
 
@@ -1293,11 +1278,19 @@ function downloadPdf(doc = null) {
     link.click();
     document.body.removeChild(link);
 }
+// function downloadPdf() {
+//     if (!pdfViewer.value.url) {
+//         alert("⚠️ 다운로드할 파일이 없습니다.");
+//         return;
+//     }
 
-function closePdfViewer() {
-    pdfViewer.value.isOpen = false;
-    pdfDoc = null;
-}
+//     const link = document.createElement("a");
+//     link.href = pdfViewer.value.url;
+//     link.download = pdfViewer.value.title;
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+// }
 
 onMounted(() => {
     window.addEventListener("keydown", (event) => {
