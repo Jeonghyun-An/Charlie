@@ -591,7 +591,7 @@ import PDFViewer from "@/components/PDFViewer.vue";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-//mongoDB
+// mongoDB
 const API_URL = "http://localhost:3001/api";
 
 const clickOutside = {
@@ -604,6 +604,7 @@ const clickOutside = {
 };
 defineExpose({ directives: { "click-outside": clickOutside } });
 
+// 날짜 형식
 const formattedDate = computed(() => {
     if (!activeChat.value || !activeChat.value.createdAt) return "";
 
@@ -619,7 +620,7 @@ const formattedDate = computed(() => {
     });
 });
 const isCustomDocs = computed(() => activeChat.value?.isCustomDocs ?? false);
-
+// 문서 및 뷰어
 const selectedGroup = ref(null);
 const showUploadMenu = ref(false);
 const showDocumentGroupPopup = ref(false);
@@ -629,19 +630,20 @@ const selectedGroupName = ref(null); // 문서 그룹 선택 시 채팅 이름 �
 const uploadedFiles = ref([]);
 const fileInput = ref(null);
 const isDocsPanelOpen = ref(false);
+// 채팅
 const chatRecords = ref([]);
 const activeChat = ref(null);
 const newMessage = ref("");
+// UI 관련
 const activeMenuId = ref(null);
 const menuStyle = reactive({ top: "0px", left: "0px" });
 const isSidebarOpen = ref(true); // 사이드바 상태 추가
-const isLoading = ref(false); // ✅ 로딩 상태 변수 추가
-
 const uploadMenuRef = ref(null);
 const chatMessagesRef = ref(null);
 const teleportMenuRef = ref(null);
 const textareaRef = ref(null);
 const MAX_HEIGHT = 200;
+const isLoading = ref(false); // 로딩 상태 변수 추가
 
 onClickOutside(uploadMenuRef, () => {
     showUploadMenu.value = false;
@@ -703,7 +705,7 @@ async function handleFileUpload(event = null) {
 
     let uploadedFileIds = [];
 
-    // ✅ 새로운 파일 업로드
+    // 새로운 파일 업로드
     for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
@@ -851,12 +853,12 @@ async function handleFileAddToGroup(event) {
                 const uploadedFile = {
                     _id: res.data.file._id,
                     name: res.data.file.name,
-                    path: `/api/files/${res.data.file._id}`, // ✅ API 경로로 지정
+                    path: `/api/files/${res.data.file._id}`, // API 경로로 지정
                     size: (file.size / 1024).toFixed(2) + " KB",
                 };
 
-                selectedGroup.value.docs.push(uploadedFile); // ✅ 문서 그룹에 추가
-                uploadedFiles.value.push(uploadedFile); // ✅ 업로드된 파일에도 추가
+                selectedGroup.value.docs.push(uploadedFile); // 문서 그룹에 추가
+                uploadedFiles.value.push(uploadedFile); // 업로드된 파일에도 추가
                 uploadedFileIds.push(uploadedFile._id);
             }
         } catch (err) {
@@ -864,14 +866,14 @@ async function handleFileAddToGroup(event) {
         }
     }
 
-    isLoading.value = false; // ✅ 로딩 해제
+    isLoading.value = false; //  로딩 해제
 
     if (uploadedFileIds.length > 0) {
         console.log(
             "📂 파일 업로드 완료, 문서 그룹 업데이트:",
             uploadedFiles.value
         );
-        await updateGroupName(selectedGroup.value); // ✅ 문서 그룹 업데이트
+        await updateGroupName(selectedGroup.value);
     } else {
         console.warn("⚠️ 업로드된 파일이 없음, 문서 그룹 업데이트 안함.");
     }
@@ -891,7 +893,6 @@ function addDocumentGroup(group) {
     showUploadMenu.value = false;
 }
 
-// 파일 업로드
 function removeFile(index) {
     uploadedFiles.value.splice(index, 1);
 }
@@ -900,32 +901,6 @@ function clearUploadedFiles() {
     uploadedFiles.value = [];
 }
 
-function selectChatroom(room) {
-    if (!room) {
-        console.warn("⚠️ 채팅방이 존재하지 않습니다.");
-        activeChat.value = null;
-        return;
-    }
-    fetchChatroom(room._id);
-}
-
-function newChat() {
-    activeChat.value = null;
-    newMessage.value = "";
-    isDocsPanelOpen.value = false;
-    uploadedFiles.value = [];
-    selectedGroup.value = null;
-}
-function toggleMenu(id, event) {
-    if (activeMenuId.value === id) {
-        activeMenuId.value = null;
-        return;
-    }
-    activeMenuId.value = id;
-    const rect = event.currentTarget.getBoundingClientRect();
-    menuStyle.top = rect.top - 20 + "px";
-    menuStyle.left = rect.right + 8 + "px";
-}
 // 채팅방 이름 수정 관련
 const editingRoomId = ref(null);
 const editableRoomName = ref("");
@@ -977,6 +952,34 @@ async function confirmRoomDeletion(room) {
             console.error("채팅방 삭제 실패:", err);
         }
     }
+}
+
+// ✅ 채팅 및 채팅방
+function selectChatroom(room) {
+    if (!room) {
+        console.warn("⚠️ 채팅방이 존재하지 않습니다.");
+        activeChat.value = null;
+        return;
+    }
+    fetchChatroom(room._id);
+}
+
+function newChat() {
+    activeChat.value = null;
+    newMessage.value = "";
+    isDocsPanelOpen.value = false;
+    uploadedFiles.value = [];
+    selectedGroup.value = null;
+}
+function toggleMenu(id, event) {
+    if (activeMenuId.value === id) {
+        activeMenuId.value = null;
+        return;
+    }
+    activeMenuId.value = id;
+    const rect = event.currentTarget.getBoundingClientRect();
+    menuStyle.top = rect.top - 20 + "px";
+    menuStyle.left = rect.right + 8 + "px";
 }
 
 async function fetchChatrooms() {
@@ -1200,6 +1203,7 @@ async function sendMessage() {
     }
 }
 
+// 기능
 function replayMessage(chat) {
     newMessage.value = chat.text;
 }
