@@ -319,3 +319,43 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`🚀 서버가 ${PORT} 포트에서 실행 중입니다.`);
 });
+
+const ModelSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    description: String,
+    createdAt: { type: Date, default: Date.now },
+});
+
+const Model = mongoose.model("Model", ModelSchema);
+
+// 모델 목록 조회 API
+app.get("/api/models", async (req, res) => {
+    try {
+        const models = await Model.find();
+        res.json({ success: true, data: models });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 모델 추가 API
+app.post("/api/models", async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        const newModel = new Model({ name, description });
+        await newModel.save();
+        res.status(201).json({ success: true, data: newModel });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// 특정 모델 삭제 API
+app.delete("/api/models/:id", async (req, res) => {
+    try {
+        await Model.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});

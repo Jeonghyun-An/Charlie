@@ -461,6 +461,16 @@
                             </button>
                         </div>
                     </div>
+                    <div>
+                        <button
+                            type="button"
+                            class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-400 focus:outline-none bg-white rounded-3xl border border-gray-200 hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                            @click="openModelSelection"
+                        >
+                            모델선택
+                        </button>
+                        <ModelSelection ref="modelSelectionRef" />
+                    </div>
                 </div>
             </div>
             <div
@@ -588,12 +598,17 @@ import { onClickOutside } from "@vueuse/core";
 import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import PDFViewer from "@/components/PDFViewer.vue";
+import ModelSelection from "@/components/ModelSelection.vue";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // mongoDB
 const API_URL = "http://localhost:3001/api";
+const modelSelectionRef = ref(null);
 
+const openModelSelection = () => {
+    modelSelectionRef.value.dialogVisible = true;
+};
 const clickOutside = {
     mounted(el, binding) {
         el.clickOutsideEvent = onClickOutside(el, binding.value);
