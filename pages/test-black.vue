@@ -268,7 +268,7 @@
                                     :key="index"
                                     class="flex justify-between items-center p-1 border-b text-sm"
                                 >
-                                    {{ file.name }} ({{ file.size }}KB)
+                                    {{ file.name }} ({{ file.size }})
                                     <button @click="removeFile(index)">
                                         <Icon
                                             size="22px"
@@ -434,7 +434,7 @@
                                             <span
                                                 >{{ doc.name }} ({{
                                                     doc.size
-                                                }}KB)</span
+                                                }})</span
                                             >
                                             <button
                                                 @click="
@@ -527,7 +527,7 @@
                         class="flex justify-between items-center border-b p-1 break-words whitespace-pre-wrap overflow-auto"
                     >
                         <span class="max-w-[230px]">
-                            {{ doc.name }} ({{ doc.size }}KB)
+                            {{ doc.name }} ({{ doc.size }})
                         </span>
                         <button @click="openViewer(doc)">
                             <Icon
@@ -1213,7 +1213,7 @@ function toggledocs(chat) {
 
 function viewInfo(doc) {
     alert(
-        `파일명: ${doc.name}\n파일 크기: ${doc.size}KB\n파일 경로: ${doc.path}`
+        `파일명: ${doc.name}\n파일 크기: ${doc.size}\n파일 경로: ${doc.path}`
     );
 }
 

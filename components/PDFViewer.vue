@@ -20,7 +20,7 @@
                 <canvas ref="pdfCanvas"></canvas>
             </div>
             <div
-                class="flex justify-between items-center mt-3 ml-56 text-sm p-1"
+                class="flex justify-between items-center mt-3 ml-40 text-sm p-1"
             >
                 <button
                     @click="$emit('prev')"
