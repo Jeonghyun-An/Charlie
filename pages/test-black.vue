@@ -166,14 +166,20 @@
                         <div class="flex flex-col items-start">
                             <div v-if="chat.sender === 'bot'">
                                 <button
-                                    class="text-xs text-zinc-500 cursor-pointer"
-                                    @click="toggledocs(chat)"
+                                    class="text-xs text-zinc-500 cursor-pointer flex items-center gap-2"
+                                    @click="toggleDocs(chat, index)"
                                 >
+                                    <span
+                                        class="transform transition-transform duration-200"
+                                        :class="{ 'rotate-90': chat.showDocs }"
                                     >
+                                        🡆
+                                    </span>
                                 </button>
                             </div>
                             <div
                                 v-show="chat.showDocs"
+                                :ref="(el) => (docsContainer[index] = el)"
                                 class="mt-2 p-3 w-full bg-[#f9f9f9] rounded-lg shadow"
                             >
                                 <table class="w-full border-collapse text-xs">
@@ -191,11 +197,11 @@
                                                 doc, index
                                             ) in chat.docs.slice(0, 3)"
                                             :key="index"
-                                            class="border-b"
+                                            class="border-b hover:bg-gray-50"
                                         >
                                             <td class="p-2">{{ doc.name }}</td>
                                             <td
-                                                class="p-2 flex items-center justify-center"
+                                                class="p-2 flex items-center justify-center space-x-2"
                                             >
                                                 <button
                                                     class="px-1 py-1 text-xs"
@@ -645,6 +651,7 @@ const selectedGroupName = ref(null); // 문서 그룹 선택 시 채팅 이름 �
 const uploadedFiles = ref([]);
 const fileInput = ref(null);
 const isDocsPanelOpen = ref(false);
+const docsContainer = ref([]);
 // 채팅
 const chatRecords = ref([]);
 const activeChat = ref(null);
@@ -1222,9 +1229,25 @@ async function sendMessage() {
 function replayMessage(chat) {
     newMessage.value = chat.text;
 }
-function toggledocs(chat) {
+const toggleDocs = async (chat, index) => {
     chat.showDocs = !chat.showDocs;
-}
+
+    //  문서가 펼쳐졌다면 자동으로 채팅창을 위로 스크롤
+    if (chat.showDocs) {
+        await nextTick();
+        setTimeout(() => {
+            if (
+                docsContainer.value[index] &&
+                typeof docsContainer.value[index].scrollIntoView === "function"
+            ) {
+                docsContainer.value[index].scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                });
+            }
+        }, 100); // 약간의 지연을 줘서 DOM이 완전히 렌더링된 후 실행
+    }
+};
 
 function viewInfo(doc) {
     alert(
