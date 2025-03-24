@@ -7,6 +7,14 @@
                     <OrgMine :data="myData" />
                 </AccordionTab>
                 <AccordionTab header="지뉴소프트(주)" :expanded="true">
+                    <!-- 회사 전체 드래그용 -->
+                    <div
+                        draggable="true"
+                        @dragstart="handleCompanyDrag"
+                        class="p-2 bg-zinc-100 rounded hover:bg-zinc-200 cursor-move mb-2"
+                    >
+                        <span class="text-sm text-zinc-700">👥 전체 인원</span>
+                    </div>
                     <OrgAccordion :data="orgData" />
                 </AccordionTab>
             </Accordion>
@@ -27,4 +35,24 @@ import DropTarget from "@/components/DropTarget.vue";
 
 const myData = orgMyData;
 const orgData = orgChartData;
+
+const handleCompanyDrag = (event: DragEvent) => {
+    if (!event.dataTransfer) return;
+
+    const flattenAllMembers = (node: any): string[] => {
+        if (Array.isArray(node)) return node;
+        if (typeof node === "object") {
+            return Object.values(node).flatMap(flattenAllMembers);
+        }
+        return [];
+    };
+
+    const payload = {
+        type: "company",
+        name: "지뉴소프트(주)",
+        members: flattenAllMembers(orgData),
+    };
+
+    event.dataTransfer.setData("application/json", JSON.stringify(payload));
+};
 </script>
