@@ -29,7 +29,24 @@
                     :multiple="true"
                     class="border-none shadow-none bg-zinc-100"
                 >
-                    <AccordionTab :header="formatHeader(key)">
+                    <AccordionTab>
+                        <template #header>
+                            <!-- 팀 드래그 전용 영역 -->
+                            <div
+                                class="font-semibold cursor-move w-full"
+                                draggable="true"
+                                @dragstart="
+                                    handleDragStart(key, {
+                                        type: 'team',
+                                        name: key,
+                                        members: getExactTeamMembers(data, key),
+                                    })
+                                "
+                            >
+                                {{ formatHeader(key) }}
+                            </div>
+                        </template>
+
                         <template v-if="Array.isArray(value)">
                             <ul class="ml-4 p-2 list-disc">
                                 <li
@@ -47,20 +64,9 @@
                                 </li>
                             </ul>
                         </template>
+
                         <template v-else>
-                            <!-- 팀 전체를 드래그할 수 있게 key를 포함한 객체 전달 -->
-                            <div
-                                draggable="true"
-                                @dragstart="
-                                    handleDragStart(key, {
-                                        type: 'team',
-                                        name: key,
-                                        members: flattenMembers(value),
-                                    })
-                                "
-                            >
-                                <OrgAccordion :data="value" />
-                            </div>
+                            <OrgAccordion :data="value" />
                         </template>
                     </AccordionTab>
                 </Accordion>
@@ -73,9 +79,8 @@
 import Accordion from "primevue/accordion";
 import AccordionTab from "primevue/accordiontab";
 import OrgAccordion from "@/components/OrgAccordion.vue";
-import { defineProps } from "vue";
 
-defineProps<{ data: Record<string, any> }>();
+const props = defineProps<{ data: Record<string, any> }>();
 
 const formatHeader = (key: string) => {
     return key === "관리자" ? " " : key;
@@ -88,11 +93,24 @@ const handleDragStart = (label: string, payload: any) => {
     }
 };
 
-// 재귀적으로 하위 모든 멤버 추출
-const flattenMembers = (node: any): string[] => {
+const flattenMembersIncludeAll = (node: any): string[] => {
     if (Array.isArray(node)) return node;
     if (typeof node === "object") {
-        return Object.values(node).flatMap(flattenMembers);
+        return Object.values(node).flatMap(flattenMembersIncludeAll);
+    }
+    return [];
+};
+
+const getExactTeamMembers = (node: any, targetKey: string): string[] => {
+    if (!node || typeof node !== "object") return [];
+
+    for (const [key, value] of Object.entries(node)) {
+        if (key === targetKey) {
+            return flattenMembersIncludeAll(value);
+        } else if (typeof value === "object") {
+            const result = getExactTeamMembers(value, targetKey);
+            if (result.length > 0) return result;
+        }
     }
     return [];
 };
