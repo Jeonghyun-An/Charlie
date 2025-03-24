@@ -1,7 +1,6 @@
 <template>
     <div>
         <div v-for="(value, key, idx) in data" :key="idx">
-            <!-- 관리자 또는 대표이사인 경우에는 항상 펼쳐서 리스트만 출력 -->
             <template
                 v-if="
                     Array.isArray(value) &&
@@ -9,11 +8,22 @@
                 "
             >
                 <ul class="ml-4 p-2 list-disc">
-                    <li v-for="(member, index) in value" :key="index">
+                    <li
+                        v-for="(member, index) in value"
+                        :key="index"
+                        draggable="true"
+                        @dragstart="
+                            handleDragStart(member, {
+                                type: 'member',
+                                name: member,
+                            })
+                        "
+                    >
                         {{ member }}
                     </li>
                 </ul>
             </template>
+
             <template v-else>
                 <Accordion
                     :multiple="true"
@@ -25,13 +35,32 @@
                                 <li
                                     v-for="(member, index) in value"
                                     :key="index"
+                                    draggable="true"
+                                    @dragstart="
+                                        handleDragStart(member, {
+                                            type: 'member',
+                                            name: member,
+                                        })
+                                    "
                                 >
                                     {{ member }}
                                 </li>
                             </ul>
                         </template>
                         <template v-else>
-                            <OrgAccordion :data="value" />
+                            <!-- 팀 전체를 드래그할 수 있게 key를 포함한 객체 전달 -->
+                            <div
+                                draggable="true"
+                                @dragstart="
+                                    handleDragStart(key, {
+                                        type: 'team',
+                                        name: key,
+                                        members: flattenMembers(value),
+                                    })
+                                "
+                            >
+                                <OrgAccordion :data="value" />
+                            </div>
                         </template>
                     </AccordionTab>
                 </Accordion>
@@ -43,11 +72,28 @@
 <script setup lang="ts">
 import Accordion from "primevue/accordion";
 import AccordionTab from "primevue/accordiontab";
+import OrgAccordion from "@/components/OrgAccordion.vue";
+import { defineProps } from "vue";
 
 defineProps<{ data: Record<string, any> }>();
 
-// "관리자"는 UI에 표시하지 않음
 const formatHeader = (key: string) => {
     return key === "관리자" ? " " : key;
+};
+
+const handleDragStart = (label: string, payload: any) => {
+    const transfer = (event as DragEvent).dataTransfer;
+    if (transfer) {
+        transfer.setData("application/json", JSON.stringify(payload));
+    }
+};
+
+// 재귀적으로 하위 모든 멤버 추출
+const flattenMembers = (node: any): string[] => {
+    if (Array.isArray(node)) return node;
+    if (typeof node === "object") {
+        return Object.values(node).flatMap(flattenMembers);
+    }
+    return [];
 };
 </script>
