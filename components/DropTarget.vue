@@ -1,3 +1,4 @@
+// File: DropTarget.vue (중첩 트리 병합 + 하위 팀 구조 재귀 삽입)
 <template>
     <div
         class="p-4 border border-dashed border-zinc-400 rounded-md min-h-[200px]"
@@ -30,6 +31,7 @@
                 </button>
             </div>
         </div>
+
         <div
             v-if="tree.length"
             class="overflow-auto max-h-[500px] border border-zinc-200 rounded p-2 bg-white"
@@ -46,6 +48,7 @@
                 />
             </ul>
         </div>
+
         <div
             v-else
             class="flex flex-col items-center justify-center h-32 text-zinc-400 text-sm border-2 border-dashed border-zinc-300 rounded-lg bg-zinc-50"
@@ -132,6 +135,7 @@ const removeNode = (id: string): void => {
     const topLevelIndex = tree.value.findIndex((node) => node.id === id);
     if (topLevelIndex !== -1) {
         tree.value.splice(topLevelIndex, 1);
+        delete expandedState.value[id];
         return;
     }
     const removeFromChildren = (nodes: TreeNodeItem[]): boolean => {
@@ -143,35 +147,119 @@ const removeNode = (id: string): void => {
             );
             if (childIndex !== -1) {
                 node.children.splice(childIndex, 1);
-                if (node.children.length === 0) node.children = [];
+                delete expandedState.value[id];
                 return true;
             }
-            if (node.children.length > 0 && removeFromChildren(node.children))
-                return true;
+            if (removeFromChildren(node.children)) return true;
         }
         return false;
     };
     removeFromChildren(tree.value);
 };
-// 멤버가 어떤 팀에도 속하지 않았는지 확인
-const isIndependentMember = (memberName: string): boolean => {
-    const nameOnly = extractNameAndPosition(memberName).name;
-    const findMemberInChildren = (nodes: TreeNodeItem[]): boolean => {
-        for (const node of nodes) {
-            if (
-                node.children?.some(
-                    (child) =>
-                        child.type === "member" &&
-                        extractNameAndPosition(child.name).name === nameOnly
-                )
-            )
-                return true;
-            if (node.children?.length && findMemberInChildren(node.children))
-                return true;
+
+const ensureTeamPath = (path: string[]): TreeNodeItem[] => {
+    let current = tree.value;
+    const fullPath: TreeNodeItem[] = [];
+
+    for (const segment of path) {
+        let node = current.find(
+            (n) =>
+                (n.type === "team" || n.type === "department") &&
+                n.name === segment
+        );
+        if (!node) {
+            node = {
+                name: segment,
+                type: "team",
+                id: generateId("team", segment),
+                children: [],
+            };
+            current.push(node);
         }
-        return false;
-    };
-    return !findMemberInChildren(tree.value);
+        fullPath.push(node);
+        if (!node.children) node.children = [];
+        current = node.children;
+    }
+
+    return fullPath;
+};
+
+const insertRecursiveTeam = (
+    node: DragDataTeam,
+    path: string[] = []
+): TreeNodeItem => {
+    const teamPath = [...path, node.name];
+    const teamChain = ensureTeamPath(teamPath);
+    const teamNode = teamChain[teamChain.length - 1];
+    teamNode.children = teamNode.children || [];
+
+    node.members.forEach((member: string) => {
+        const memberId = generateId("member", member);
+        removeNode(memberId);
+        const { position } = extractNameAndPosition(member);
+        teamNode.children!.push({
+            name: member,
+            type: "member",
+            id: memberId,
+            position,
+            path: teamPath,
+        });
+        expandedState.value[memberId] = true;
+    });
+
+    if ((node as any).children) {
+        (node as any).children.forEach((childTeam: DragDataTeam) => {
+            insertRecursiveTeam(childTeam, teamPath);
+        });
+    }
+
+    expandedState.value[teamNode.id] = true;
+    return teamNode;
+};
+
+const handleDrop = (event: DragEvent): void => {
+    const data = event.dataTransfer?.getData("application/json");
+    if (!data) return;
+
+    try {
+        const parsed = JSON.parse(data) as DragData;
+
+        if (parsed.type === "member") {
+            const { name, position } = extractNameAndPosition(parsed.name);
+            const memberId = generateId("member", parsed.name);
+            const existingNode = findNodeById(tree.value, memberId);
+            if (existingNode) removeNode(memberId);
+
+            const newNode: TreeNodeItem = {
+                name: parsed.name,
+                type: "member",
+                id: memberId,
+                position,
+                path: parsed.path,
+            };
+
+            const inserted = parsed.path
+                ? insertMemberToTeamByPath(newNode, parsed.path)
+                : false;
+            if (!inserted) tree.value.push(newNode);
+            expandedState.value[memberId] = true;
+        } else if (parsed.type === "team" || parsed.type === "department") {
+            insertRecursiveTeam(parsed);
+        }
+    } catch (err) {
+        console.error("❌ 드롭 데이터 파싱 오류:", err);
+    }
+};
+
+const insertMemberToTeamByPath = (
+    member: TreeNodeItem,
+    path: string[]
+): boolean => {
+    const fullPath = ensureTeamPath(path);
+    const targetTeam = fullPath[fullPath.length - 1];
+    const exists = targetTeam.children!.some((child) => child.id === member.id);
+    if (!exists) targetTeam.children!.push(member);
+    return true;
 };
 
 interface DragDataMember {
@@ -184,6 +272,7 @@ interface DragDataTeam {
     name: string;
     members: string[];
     path?: string[];
+    children?: DragDataTeam[];
 }
 interface DragDataCompany {
     type: "company";
@@ -192,139 +281,6 @@ interface DragDataCompany {
     path?: string[];
 }
 type DragData = DragDataMember | DragDataTeam | DragDataCompany;
-
-const insertMemberToTeamByPath = (
-    member: TreeNodeItem,
-    path: string[]
-): boolean => {
-    let currentNodes = tree.value;
-    let parent: TreeNodeItem | null = null;
-
-    for (const segment of path) {
-        const found = currentNodes.find(
-            (n) =>
-                (n.type === "team" || n.type === "department") &&
-                n.name === segment
-        );
-        if (!found) return false;
-        parent = found;
-        if (!found.children) found.children = [];
-        currentNodes = found.children;
-    }
-
-    if (!parent) return false;
-    const exists = parent.children!.some((child) => child.id === member.id);
-    if (!exists) parent.children!.push(member);
-    return true;
-};
-
-const handleDrop = (event: DragEvent): void => {
-    const data = event.dataTransfer?.getData("application/json");
-    if (!data) return;
-    try {
-        const parsed = JSON.parse(data) as DragData;
-
-        if (parsed.type === "member") {
-            const { name, position } = extractNameAndPosition(parsed.name);
-            const memberId = generateId("member", parsed.name);
-
-            // 이미 독립적으로 추가된 멤버인지 확인
-            const existingNode = findNodeById(tree.value, memberId);
-            if (existingNode) return;
-
-            // 이미 다른 팀에 포함된 멤버인지 확인
-            if (!isIndependentMember(parsed.name)) return;
-            // 멤버 추가
-            const newNode: TreeNodeItem = {
-                name: parsed.name,
-                type: "member",
-                id: memberId,
-                position,
-            };
-            const inserted = parsed.path
-                ? insertMemberToTeamByPath(newNode, parsed.path)
-                : false;
-            if (!inserted) tree.value.push(newNode);
-            expandedState.value[memberId] = true;
-        } else if (parsed.type === "team" || parsed.type === "department") {
-            const teamId = generateId(parsed.type, parsed.name);
-
-            // 이미 추가된 팀인지 확인
-            if (findNodeById(tree.value, teamId)) return;
-
-            // 팀에 속한 멤버 중 중복을 제거
-            const uniqueMembers = parsed.members.filter((member: string) =>
-                isIndependentMember(member)
-            );
-
-            // 팀과 멤버 추가
-            const memberNodes: TreeNodeItem[] = uniqueMembers.map(
-                (member: string) => {
-                    const memberId = generateId("member", member);
-                    const existing = findNodeById(tree.value, memberId);
-                    if (existing) {
-                        removeNode(memberId);
-                        delete expandedState.value[memberId];
-                        existing.path = parsed.path || [parsed.name];
-
-                        return existing;
-                    } else {
-                        const { position } = extractNameAndPosition(member);
-                        return {
-                            name: member,
-                            type: "member",
-                            id: memberId,
-                            position,
-                            path: [parsed.name],
-                        };
-                    }
-                }
-            );
-
-            const newNode: TreeNodeItem = {
-                name: parsed.name,
-                type: parsed.type,
-                id: teamId,
-                children: memberNodes,
-                path: parsed.path || [parsed.name], // ✅ 계층 경로 보존
-            };
-
-            tree.value.push(newNode);
-            expandedState.value[teamId] = true;
-        } else if (parsed.type === "company") {
-            const companyId = generateId("company", parsed.name);
-            if (findNodeById(tree.value, companyId)) return;
-            const uniqueMembers = parsed.members.filter(
-                (member: string) =>
-                    !findNodeById(tree.value, generateId("member", member))
-            );
-            const memberNodes: TreeNodeItem[] = uniqueMembers.map(
-                (member: string) => {
-                    const { position } = extractNameAndPosition(member);
-                    return {
-                        name: member,
-                        type: "member",
-                        id: generateId("member", member),
-                        position,
-                        path: [parsed.name],
-                    };
-                }
-            );
-
-            const newNode: TreeNodeItem = {
-                name: parsed.name,
-                type: "company",
-                id: companyId,
-                children: memberNodes,
-            };
-
-            tree.value.push(newNode);
-            expandedState.value[companyId] = true;
-        }
-    } catch (err) {
-        console.error("❌ 드롭 데이터 파싱 오류:", err);
-    }
-};
 
 onMounted(() => {
     expandAll();

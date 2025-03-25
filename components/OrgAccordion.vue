@@ -32,7 +32,6 @@
                 >
                     <AccordionTab>
                         <template #header>
-                            <!-- 팀 드래그 전용 영역 -->
                             <div
                                 class="font-semibold cursor-move w-full"
                                 draggable="true"
@@ -40,8 +39,12 @@
                                     handleDragStart(key, {
                                         type: 'team',
                                         name: key,
-                                        members: getExactTeamMembers(data, key),
+                                        members: getExactTeamMembers(
+                                            value,
+                                            key
+                                        ),
                                         path: [...currentPath, key],
+                                        children: getNestedChildren(value),
                                     })
                                 "
                             >
@@ -69,7 +72,10 @@
                         </template>
 
                         <template v-else>
-                            <OrgAccordion :data="value" />
+                            <OrgAccordion
+                                :data="value"
+                                :currentPath="[...currentPath, key]"
+                            />
                         </template>
                     </AccordionTab>
                 </Accordion>
@@ -87,6 +93,7 @@ const props = defineProps<{
     data: Record<string, any>;
     currentPath?: string[];
 }>();
+
 const currentPath = props.currentPath || [];
 
 const formatHeader = (key: string) => {
@@ -120,5 +127,26 @@ const getExactTeamMembers = (node: any, targetKey: string): string[] => {
         }
     }
     return [];
+};
+
+const getNestedChildren = (node: any): any[] => {
+    const result: any[] = [];
+    for (const [key, value] of Object.entries(node)) {
+        if (Array.isArray(value)) {
+            result.push({
+                type: "team",
+                name: key,
+                members: value,
+            });
+        } else if (typeof value === "object") {
+            result.push({
+                type: "team",
+                name: key,
+                members: getExactTeamMembers(value, key),
+                children: getNestedChildren(value),
+            });
+        }
+    }
+    return result;
 };
 </script>

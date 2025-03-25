@@ -1,8 +1,8 @@
 export interface TreeNodeItem {
     name: string;
-    type: "team" | "member" | "company" | "department";
+    type: "company" | "team" | "department" | "member";
     id: string;
-    path?: string[];
     position?: string;
+    path?: string[];
     children?: TreeNodeItem[];
 }
