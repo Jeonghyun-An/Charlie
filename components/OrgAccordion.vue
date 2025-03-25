@@ -39,12 +39,12 @@
                                     handleDragStart(key, {
                                         type: 'team',
                                         name: key,
-                                        members: getExactTeamMembers(
-                                            value,
-                                            key
-                                        ),
+                                        members: getExactTeamMembers(value),
                                         path: [...currentPath, key],
-                                        children: getNestedChildren(value),
+                                        children: buildNestedChildren(value, [
+                                            ...currentPath,
+                                            key,
+                                        ]),
                                     })
                                 "
                             >
@@ -115,21 +115,11 @@ const flattenMembersIncludeAll = (node: any): string[] => {
     return [];
 };
 
-const getExactTeamMembers = (node: any, targetKey: string): string[] => {
-    if (!node || typeof node !== "object") return [];
-
-    for (const [key, value] of Object.entries(node)) {
-        if (key === targetKey) {
-            return flattenMembersIncludeAll(value);
-        } else if (typeof value === "object") {
-            const result = getExactTeamMembers(value, targetKey);
-            if (result.length > 0) return result;
-        }
-    }
-    return [];
+const getExactTeamMembers = (node: any): string[] => {
+    return flattenMembersIncludeAll(node);
 };
 
-const getNestedChildren = (node: any): any[] => {
+const buildNestedChildren = (node: any, path: string[]): any[] => {
     const result: any[] = [];
     for (const [key, value] of Object.entries(node)) {
         if (Array.isArray(value)) {
@@ -137,13 +127,15 @@ const getNestedChildren = (node: any): any[] => {
                 type: "team",
                 name: key,
                 members: value,
+                path: [...path, key],
             });
         } else if (typeof value === "object") {
             result.push({
                 type: "team",
                 name: key,
-                members: getExactTeamMembers(value, key),
-                children: getNestedChildren(value),
+                members: getExactTeamMembers(value),
+                path: [...path, key],
+                children: buildNestedChildren(value, [...path, key]),
             });
         }
     }

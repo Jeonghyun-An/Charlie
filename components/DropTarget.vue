@@ -1,4 +1,3 @@
-// File: DropTarget.vue (중첩 트리 병합 + 하위 팀 구조 재귀 삽입)
 <template>
     <div
         class="p-4 border border-dashed border-zinc-400 rounded-md min-h-[200px]"
@@ -157,9 +156,9 @@ const removeNode = (id: string): void => {
     removeFromChildren(tree.value);
 };
 
-const ensureTeamPath = (path: string[]): TreeNodeItem[] => {
+const ensureTeamPath = (path: string[]): TreeNodeItem => {
     let current = tree.value;
-    const fullPath: TreeNodeItem[] = [];
+    let lastNode: TreeNodeItem | null = null;
 
     for (const segment of path) {
         let node = current.find(
@@ -176,21 +175,29 @@ const ensureTeamPath = (path: string[]): TreeNodeItem[] => {
             };
             current.push(node);
         }
-        fullPath.push(node);
         if (!node.children) node.children = [];
         current = node.children;
+        lastNode = node;
     }
 
-    return fullPath;
+    return lastNode!;
 };
 
-const insertRecursiveTeam = (
-    node: DragDataTeam,
-    path: string[] = []
-): TreeNodeItem => {
+const insertMemberToTeamByPath = (
+    member: TreeNodeItem,
+    path: string[]
+): boolean => {
+    const team = ensureTeamPath(path);
+    if (!team.children!.some((child) => child.id === member.id)) {
+        team.children!.push(member);
+        return true;
+    }
+    return false;
+};
+
+const insertRecursiveTeam = (node: DragDataTeam, path: string[] = []): void => {
     const teamPath = [...path, node.name];
-    const teamChain = ensureTeamPath(teamPath);
-    const teamNode = teamChain[teamChain.length - 1];
+    const teamNode = ensureTeamPath(teamPath);
     teamNode.children = teamNode.children || [];
 
     node.members.forEach((member: string) => {
@@ -207,14 +214,13 @@ const insertRecursiveTeam = (
         expandedState.value[memberId] = true;
     });
 
-    if ((node as any).children) {
-        (node as any).children.forEach((childTeam: DragDataTeam) => {
-            insertRecursiveTeam(childTeam, teamPath);
-        });
+    if (node.children?.length) {
+        node.children.forEach((childTeam) =>
+            insertRecursiveTeam(childTeam, teamPath)
+        );
     }
 
     expandedState.value[teamNode.id] = true;
-    return teamNode;
 };
 
 const handleDrop = (event: DragEvent): void => {
@@ -227,8 +233,7 @@ const handleDrop = (event: DragEvent): void => {
         if (parsed.type === "member") {
             const { name, position } = extractNameAndPosition(parsed.name);
             const memberId = generateId("member", parsed.name);
-            const existingNode = findNodeById(tree.value, memberId);
-            if (existingNode) removeNode(memberId);
+            removeNode(memberId);
 
             const newNode: TreeNodeItem = {
                 name: parsed.name,
@@ -249,17 +254,6 @@ const handleDrop = (event: DragEvent): void => {
     } catch (err) {
         console.error("❌ 드롭 데이터 파싱 오류:", err);
     }
-};
-
-const insertMemberToTeamByPath = (
-    member: TreeNodeItem,
-    path: string[]
-): boolean => {
-    const fullPath = ensureTeamPath(path);
-    const targetTeam = fullPath[fullPath.length - 1];
-    const exists = targetTeam.children!.some((child) => child.id === member.id);
-    if (!exists) targetTeam.children!.push(member);
-    return true;
 };
 
 interface DragDataMember {
