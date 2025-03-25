@@ -66,38 +66,6 @@ import { ref, type Ref, onMounted, provide } from "vue";
 import EnhancedTreeNode from "@/components/TreeNode.vue";
 import type { TreeNodeItem } from "@/types/tree";
 
-// 필요한 타입 정의 (타입 파일에 이미 정의되어 있다면 import만 하면 됩니다)
-// TreeNodeItem 타입이 types/tree.ts에 정의되어 있지 않다면 여기 추가하세요:
-/* 
-interface TreeNodeItem {
-    id: string;
-    name: string;
-    type: 'member' | 'team' | 'department' | 'company';
-    children?: TreeNodeItem[];
-    position?: string;
-    path?: string[];
-}
-
-interface DragDataMember {
-    type: 'member';
-    name: string;
-}
-
-interface DragDataTeam {
-    type: 'team' | 'department';
-    name: string;
-    members: string[];
-}
-
-interface DragDataCompany {
-    type: 'company';
-    name: string;
-    members: string[];
-}
-
-type DragData = DragDataMember | DragDataTeam | DragDataCompany;
-*/
-
 const tree = ref<TreeNodeItem[]>([]);
 const expandedState: Ref<Record<string, boolean>> = ref({});
 provide("expandedState", expandedState);
@@ -249,6 +217,7 @@ const isIndependentMember = (memberName: string): boolean => {
 interface DragDataMember {
     type: "member";
     name: string;
+    path: string;
 }
 
 interface DragDataTeam {
@@ -264,6 +233,30 @@ interface DragDataCompany {
 }
 
 type DragData = DragDataMember | DragDataTeam | DragDataCompany;
+
+const insertMemberToTeam = (
+    member: TreeNodeItem,
+    teamName: string
+): boolean => {
+    const insert = (nodes: TreeNodeItem[]): boolean => {
+        for (const node of nodes) {
+            if (
+                (node.type === "team" || node.type === "department") &&
+                node.name === teamName
+            ) {
+                if (!node.children) node.children = [];
+                const exists = node.children.some(
+                    (child) => child.id === member.id
+                );
+                if (!exists) node.children.push(member);
+                return true;
+            }
+            if (node.children && insert(node.children)) return true;
+        }
+        return false;
+    };
+    return insert(tree.value);
+};
 
 const handleDrop = (event: DragEvent): void => {
     const data = event.dataTransfer?.getData("application/json");
@@ -283,6 +276,7 @@ const handleDrop = (event: DragEvent): void => {
             // 이미 다른 팀에 포함된 멤버인지 확인
             if (!isIndependentMember(parsed.name)) return;
 
+            const teamNameHint = parsed.path?.[0] || parsed.name.split(" ")[0];
             // 멤버 추가
             const newNode: TreeNodeItem = {
                 name: parsed.name,
@@ -290,8 +284,10 @@ const handleDrop = (event: DragEvent): void => {
                 id: memberId,
                 position: position,
             };
-
-            tree.value.push(newNode);
+            const inserted = insertMemberToTeam(newNode, teamNameHint);
+            if (!inserted) {
+                tree.value.push(newNode);
+            }
             expandedState.value[memberId] = true;
         } else if (parsed.type === "team" || parsed.type === "department") {
             const teamId = generateId(parsed.type, parsed.name);

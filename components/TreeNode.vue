@@ -28,7 +28,12 @@
                 <span v-else>👤</span>
             </span>
 
-            <span :class="nameClasses">{{ displayName }}</span>
+            <span :class="nameClasses"
+                >{{ displayName }}
+                <span v-if="memberCount > 0" class="text-xs text-zinc-500 ml-1">
+                    ({{ memberCount }})</span
+                ></span
+            >
             <span v-if="node.position" class="text-xs ml-1 text-zinc-500">{{
                 node.position
             }}</span>
@@ -110,5 +115,16 @@ const displayName = computed(() => {
         }
     }
     return props.node.name;
+});
+
+const memberCount = computed(() => {
+    const countMembers = (nodes: TreeNodeItem[]): number => {
+        return nodes.reduce((total, node) => {
+            if (node.type === "member") return total + 1;
+            if (node.children) return total + countMembers(node.children);
+            return total;
+        }, 0);
+    };
+    return props.node.children ? countMembers(props.node.children) : 0;
 });
 </script>

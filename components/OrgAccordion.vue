@@ -16,6 +16,7 @@
                             handleDragStart(member, {
                                 type: 'member',
                                 name: member,
+                                path: [key],
                             })
                         "
                     >
@@ -57,6 +58,7 @@
                                         handleDragStart(member, {
                                             type: 'member',
                                             name: member,
+                                            path: [key],
                                         })
                                     "
                                 >
