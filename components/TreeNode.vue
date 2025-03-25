@@ -12,8 +12,18 @@
                 @click="emit('toggle-expand', node.id)"
                 class="w-5 h-5 flex items-center justify-center text-zinc-500 hover:text-zinc-800"
             >
-                <span v-if="expanded">▼</span>
-                <span v-else>▶</span>
+                <span v-if="expanded"
+                    ><Icon
+                        size="28px"
+                        name="mdi-light:chevron-down"
+                        class="text-zinc-400 hover:text-zinc-800"
+                /></span>
+                <span v-else
+                    ><Icon
+                        size="28px"
+                        name="mdi-light:chevron-right"
+                        class="text-zinc-400 hover:text-zinc-800"
+                /></span>
             </button>
             <span v-else class="w-5"></span>
 

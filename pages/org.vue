@@ -27,10 +27,10 @@
 </template>
 
 <script setup lang="ts">
+import orgMyData from "@/assets/data/myData.json";
 import OrgMine from "@/components/OrgMine.vue";
 import orgChartData from "@/assets/data/orgChart.json";
 import OrgAccordion from "@/components/OrgAccordion.vue";
-import orgMyData from "@/assets/data/myData.json";
 import DropTarget from "@/components/DropTarget.vue";
 
 const myData = orgMyData;
