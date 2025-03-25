@@ -16,7 +16,7 @@
                             handleDragStart(member, {
                                 type: 'member',
                                 name: member,
-                                path: [key],
+                                path: [...currentPath, key],
                             })
                         "
                     >
@@ -41,6 +41,7 @@
                                         type: 'team',
                                         name: key,
                                         members: getExactTeamMembers(data, key),
+                                        path: [...currentPath, key],
                                     })
                                 "
                             >
@@ -58,7 +59,7 @@
                                         handleDragStart(member, {
                                             type: 'member',
                                             name: member,
-                                            path: [key],
+                                            path: [...currentPath, key],
                                         })
                                     "
                                 >
@@ -82,7 +83,11 @@ import Accordion from "primevue/accordion";
 import AccordionTab from "primevue/accordiontab";
 import OrgAccordion from "@/components/OrgAccordion.vue";
 
-const props = defineProps<{ data: Record<string, any> }>();
+const props = defineProps<{
+    data: Record<string, any>;
+    currentPath?: string[];
+}>();
+const currentPath = props.currentPath || [];
 
 const formatHeader = (key: string) => {
     return key === "관리자" ? " " : key;
