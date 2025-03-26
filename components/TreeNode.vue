@@ -7,6 +7,7 @@
                 'hover:bg-zinc-100',
                 level === 0 ? 'font-semibold' : '',
             ]"
+            @click.self="emit('toggle-expand', node.id)"
         >
             <button
                 v-if="node.children?.length"
@@ -42,7 +43,9 @@
                 /></span>
             </span>
 
-            <span :class="nameClasses"
+            <span
+                :class="nameClasses"
+                @click.self="emit('toggle-expand', node.id)"
                 >{{ displayName }}
                 <span v-if="memberCount > 0" class="text-xs text-zinc-500 ml-1">
                     ({{ memberCount }})</span
@@ -57,6 +60,7 @@
 
             <button
                 @click="emit('remove', node.id)"
+                @click.stop="emit('toggle-expand', node.id)"
                 class="ml-auto text-zinc-400 hover:text-red-500 text-xs px-1"
             >
                 ✕
