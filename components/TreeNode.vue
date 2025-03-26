@@ -1,6 +1,7 @@
 <template>
     <li class="mb-1">
         <div
+            v-if="node.name !== '관리자'"
             :class="[
                 'flex items-center gap-1 py-1 px-1 rounded',
                 'hover:bg-zinc-100',
@@ -28,14 +29,17 @@
             <span v-else class="w-5"></span>
 
             <span class="mr-1">
-                <span v-if="node.type === 'company'">🏢</span>
+                <span v-if="node.type === 'company'"
+                    ><Icon size="28px" name="material-symbols:account-balance"
+                /></span>
                 <span
                     v-else-if="
                         node.type === 'team' || node.type === 'department'
                     "
-                    >👥</span
-                >
-                <span v-else>👤</span>
+                ></span>
+                <span v-else
+                    ><Icon size="22px" name="material-symbols:account-circle"
+                /></span>
             </span>
 
             <span :class="nameClasses"
