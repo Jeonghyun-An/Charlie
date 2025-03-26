@@ -74,7 +74,7 @@
                         <template v-else>
                             <OrgAccordion
                                 :data="value"
-                                :currentPath="[...currentPath, key]"
+                                :currentPath="currentPath"
                             />
                         </template>
                     </AccordionTab>
