@@ -52,7 +52,7 @@
                 node.position
             }}</span>
             <span v-if="node.path?.length" class="text-xs ml-2 text-zinc-400">
-                {{ node.path.join(" / ") }}
+                {{ node.path.join(" / ").replace("관리자", "") }}
             </span>
 
             <button
