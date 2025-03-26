@@ -156,9 +156,9 @@ const removeNode = (id: string): void => {
     removeFromChildren(tree.value);
 };
 
-const ensureTeamPath = (path: string[]): TreeNodeItem => {
+const ensureTeamPath = (path: string[]): TreeNodeItem[] => {
     let current = tree.value;
-    let lastNode: TreeNodeItem | null = null;
+    const fullPath: TreeNodeItem[] = [];
 
     for (const segment of path) {
         let node = current.find(
@@ -175,52 +175,59 @@ const ensureTeamPath = (path: string[]): TreeNodeItem => {
             };
             current.push(node);
         }
+        fullPath.push(node);
         if (!node.children) node.children = [];
         current = node.children;
-        lastNode = node;
     }
 
-    return lastNode!;
+    return fullPath;
+};
+
+const insertRecursiveTeam = (
+    node: DragDataTeam,
+    path: string[] = []
+): TreeNodeItem => {
+    const teamPath = [...path, node.name];
+    const teamChain = ensureTeamPath(teamPath);
+    const teamNode = teamChain[teamChain.length - 1];
+
+    node.members.forEach((member: string) => {
+        const memberId = generateId("member", member);
+        removeNode(memberId);
+        const { position } = extractNameAndPosition(member);
+
+        const exists = teamNode.children?.some((c) => c.id === memberId);
+        if (!exists) {
+            teamNode.children!.push({
+                name: member,
+                type: "member",
+                id: memberId,
+                position,
+                path: teamPath,
+            });
+            expandedState.value[memberId] = true;
+        }
+    });
+
+    if (node.children?.length) {
+        node.children.forEach((childTeam) => {
+            insertRecursiveTeam(childTeam, teamPath);
+        });
+    }
+
+    expandedState.value[teamNode.id] = true;
+    return teamNode;
 };
 
 const insertMemberToTeamByPath = (
     member: TreeNodeItem,
     path: string[]
 ): boolean => {
-    const team = ensureTeamPath(path);
-    if (!team.children!.some((child) => child.id === member.id)) {
-        team.children!.push(member);
-        return true;
-    }
-    return false;
-};
-
-const insertRecursiveTeam = (node: DragDataTeam, path: string[] = []): void => {
-    const teamPath = [...path, node.name];
-    const teamNode = ensureTeamPath(teamPath);
-    teamNode.children = teamNode.children || [];
-
-    node.members.forEach((member: string) => {
-        const memberId = generateId("member", member);
-        removeNode(memberId);
-        const { position } = extractNameAndPosition(member);
-        teamNode.children!.push({
-            name: member,
-            type: "member",
-            id: memberId,
-            position,
-            path: teamPath,
-        });
-        expandedState.value[memberId] = true;
-    });
-
-    if (node.children?.length) {
-        node.children.forEach((childTeam) =>
-            insertRecursiveTeam(childTeam, teamPath)
-        );
-    }
-
-    expandedState.value[teamNode.id] = true;
+    const fullPath: TreeNodeItem[] = ensureTeamPath(path);
+    const targetTeam = fullPath[fullPath.length - 1];
+    const exists = targetTeam.children!.some((child) => child.id === member.id);
+    if (!exists) targetTeam.children!.push(member);
+    return true;
 };
 
 const handleDrop = (event: DragEvent): void => {
@@ -233,7 +240,8 @@ const handleDrop = (event: DragEvent): void => {
         if (parsed.type === "member") {
             const { name, position } = extractNameAndPosition(parsed.name);
             const memberId = generateId("member", parsed.name);
-            removeNode(memberId);
+            const existingNode = findNodeById(tree.value, memberId);
+            if (existingNode) removeNode(memberId);
 
             const newNode: TreeNodeItem = {
                 name: parsed.name,
