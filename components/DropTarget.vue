@@ -190,6 +190,7 @@ const insertRecursiveTeam = (
     const teamPath = [...path, node.name];
     const teamChain = ensureTeamPath(teamPath);
     const teamNode = teamChain[teamChain.length - 1];
+    teamNode.children = teamNode.children || [];
 
     node.members.forEach((member: string) => {
         const memberId = generateId("member", member);
@@ -256,8 +257,18 @@ const handleDrop = (event: DragEvent): void => {
                 : false;
             if (!inserted) tree.value.push(newNode);
             expandedState.value[memberId] = true;
+            expandAll();
         } else if (parsed.type === "team" || parsed.type === "department") {
-            insertRecursiveTeam(parsed);
+            // 중복된 team path 삽입 방지 (기존에 존재하는 동일 팀 + 동일 path 제거)
+            const fullTeamId = generateId(
+                "team",
+                [...(parsed.path || []), parsed.name].join("-")
+            );
+            const existingTeam = findNodeById(tree.value, fullTeamId);
+            if (existingTeam) removeNode(fullTeamId);
+
+            insertRecursiveTeam(parsed, parsed.path);
+            expandAll();
         }
     } catch (err) {
         console.error("❌ 드롭 데이터 파싱 오류:", err);
