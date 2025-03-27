@@ -39,8 +39,8 @@
                                     handleDragStart(key, {
                                         type: 'team',
                                         name: key,
-                                        members: getExactTeamMembers(value),
-                                        path: [...currentPath, key],
+                                        members: getAllMembers(value),
+                                        path: currentPath,
                                         children: buildNestedChildren(value, [
                                             ...currentPath,
                                             key,
@@ -48,7 +48,7 @@
                                     })
                                 "
                             >
-                                {{ formatHeader(key) }}
+                                {{ key }}
                             </div>
                         </template>
 
@@ -74,7 +74,7 @@
                         <template v-else>
                             <OrgAccordion
                                 :data="value"
-                                :currentPath="currentPath"
+                                :currentPath="[...currentPath, key]"
                             />
                         </template>
                     </AccordionTab>
@@ -96,10 +96,6 @@ const props = defineProps<{
 
 const currentPath = props.currentPath || [];
 
-const formatHeader = (key: string) => {
-    return key === "관리자" ? " " : key;
-};
-
 const handleDragStart = (label: string, payload: any) => {
     const transfer = (event as DragEvent).dataTransfer;
     if (transfer) {
@@ -107,38 +103,36 @@ const handleDragStart = (label: string, payload: any) => {
     }
 };
 
-const flattenMembersIncludeAll = (node: any): string[] => {
+const getAllMembers = (node: any): string[] => {
     if (Array.isArray(node)) return node;
     if (typeof node === "object") {
-        return Object.values(node).flatMap(flattenMembersIncludeAll);
+        return Object.values(node).flatMap(getAllMembers);
     }
     return [];
 };
 
-const getExactTeamMembers = (node: any): string[] => {
-    return flattenMembersIncludeAll(node);
-};
-
 const buildNestedChildren = (node: any, path: string[]): any[] => {
     const result: any[] = [];
+
     for (const [key, value] of Object.entries(node)) {
         if (Array.isArray(value)) {
             result.push({
                 type: "team",
                 name: key,
                 members: value,
-                path: [...path, key],
+                path: [...path],
             });
         } else if (typeof value === "object") {
             result.push({
                 type: "team",
                 name: key,
-                members: getExactTeamMembers(value),
-                path: [...path, key],
+                members: getAllMembers(value),
+                path: [...path],
                 children: buildNestedChildren(value, [...path, key]),
             });
         }
     }
+
     return result;
 };
 </script>
