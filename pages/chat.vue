@@ -41,7 +41,7 @@
                 </div>
             </div>
             <div
-                class="chat-list-header m-1 pl-2 font-bold text-xs border-zinc-100"
+                class="chat-list-header my-2 pl-2 font-bold text-xs border-zinc-100"
             >
                 채팅 목록
             </div>
@@ -103,12 +103,12 @@
                 v-if="activeChat"
                 class="chat-title flex flex-col items-center text-center text-sm text-zinc-400"
             >
-                <span class="font-semibold">{{
-                    activeChat ? activeChat.title : "채팅을 시작하세요"
-                }}</span>
-                <span class="text-xs font-light text-zinc-300">{{
-                    formattedDate
-                }}</span>
+                <span class="font-semibold">
+                    {{ activeChat ? activeChat.title : "채팅을 시작하세요" }}
+                </span>
+                <span class="text-xs font-light text-zinc-300">
+                    {{ formattedDate }}
+                </span>
             </div>
             <div
                 class="flex-1 flex flex-col gap-2 overflow-y-auto px-[20%] m-1 break-words break-keep"
@@ -308,17 +308,17 @@
                                 </button>
                                 <div
                                     v-if="showUploadMenu"
-                                    class="absolute bottom-full left-0 bg-white border rounded-md shadow-md p-2 w-40"
+                                    class="absolute bottom-full left-2 bg-white border rounded-md shadow-md p-2 w-40"
                                 >
                                     <button
                                         @click="triggerFileUpload"
-                                        class="block w-full text-left px-3 py-2 hover:bg-gray-200"
+                                        class="block w-full text-left px-3 py-2 hover:bg-gray-100"
                                     >
                                         📁 문서 업로드
                                     </button>
                                     <button
                                         @click="openDocumentGroupPopup"
-                                        class="block w-full text-left px-3 py-2 hover:bg-gray-200"
+                                        class="block w-full text-left px-3 py-2 hover:bg-gray-100"
                                     >
                                         📂 문서 그룹 관리
                                     </button>
@@ -395,7 +395,7 @@
                                         </ul>
                                         <button
                                             @click="closeDocumentGroupPopup"
-                                            class="mt-3 w-full p-2 bg-zinc-500 text-white rounded-md"
+                                            class="mt-3 w-full p-2 bg-zinc-300 text-white rounded-md hover:bg-zinc-400"
                                         >
                                             닫기
                                         </button>
@@ -458,7 +458,7 @@
                                 <Icon
                                     size="20px"
                                     name="qlementine-icons:send-16"
-                                    class="text-zinc-400 hover:text-zinc-800"
+                                    class="pr-10 text-zinc-400 hover:text-zinc-800"
                                     :class="{
                                         'opacity-50 cursor-not-allowed pointer-events-none':
                                             showDocumentGroupPopup,
@@ -498,11 +498,7 @@
                             class="px-1 cursor-pointer text-zinc-400 hover:text-zinc-800"
                             @click="toggleDocsPanel"
                         >
-                            <Icon
-                                size="24px"
-                                name="mdi:paperclip"
-                                class="text-zinc-400 hover:text-zinc-800"
-                            />
+                            <Icon size="24px" name="mdi:paperclip" />
                         </button>
                         <div
                             class="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 max-w-[100px] whitespace-nowrap group-hover:opacity-100 transition-opacity pointer-events-none"
@@ -511,12 +507,11 @@
                         </div>
                     </div>
 
-                    <button @click="sendMessage">
-                        <Icon
-                            size="20px"
-                            name="qlementine-icons:send-16"
-                            class="text-zinc-400 hover:text-zinc-800"
-                        />
+                    <button
+                        class="pr-2 text-zinc-400 hover:text-zinc-800"
+                        @click="sendMessage"
+                    >
+                        <Icon size="20px" name="qlementine-icons:send-16" />
                     </button>
                 </div>
             </div>
