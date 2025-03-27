@@ -15,16 +15,10 @@
                 class="w-5 h-5 flex items-center justify-center text-zinc-500 hover:text-zinc-800"
             >
                 <span v-if="expanded"
-                    ><Icon
-                        size="28px"
-                        name="mdi-light:chevron-down"
-                        class="text-zinc-400 hover:text-zinc-800"
+                    ><Icon size="28px" name="mdi-light:chevron-down"
                 /></span>
                 <span v-else
-                    ><Icon
-                        size="28px"
-                        name="mdi-light:chevron-right"
-                        class="text-zinc-400 hover:text-zinc-800"
+                    ><Icon size="28px" name="mdi-light:chevron-right"
                 /></span>
             </button>
             <span v-else class="w-5"></span>
@@ -46,15 +40,16 @@
             <span
                 :class="nameClasses"
                 @click.self="emit('toggle-expand', node.id)"
-                >{{ displayName }}
-                <span v-if="memberCount > 0" class="text-xs text-zinc-500 ml-1">
-                    ({{ memberCount }})</span
-                ></span
             >
-            <span v-if="node.position" class="text-xs ml-1 text-zinc-500">{{
-                node.position
-            }}</span>
-            <span v-if="node.path?.length" class="text-xs ml-2 text-zinc-400">
+                {{ displayName }}
+                <span v-if="memberCount > 0" class="text-xs text-zinc-500 ml-1">
+                    ({{ memberCount }})
+                </span>
+            </span>
+            <span v-if="node.position" class="text-xs ml-1 text-zinc-500">
+                {{ node.position }}
+            </span>
+            <span v-if="node.path?.length" class="text-xs ml-4 text-zinc-400">
                 {{ node.path.join(" / ").replace("관리자", "") }}
             </span>
 
